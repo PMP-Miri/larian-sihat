@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Larian Wira Sihat: Kutip Sayur & Buah, Elak Makanan Tidak Berkhasiat!</title>
+  
+  <!-- MediaPipe Pose untuk Kesan Pergerakan Badan & Tangan -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: rgba(15, 23, 42, 0.90);
+      --healthy-green: #10b981;
+      --danger-red: #f43f5e;
+      --gold: #facc15;
+      --sky: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: #f8fafc;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Kamera Cermin di Latar Belakang */
+    #webcam-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      opacity: 0.45;
+      z-index: 1;
+    }
+
+    /* Kesan Kilat Merah Bila Kena Makanan Tak Sihat */
+    #damage-flash {
+      position: fixed;
+      inset: 0;
+      background: rgba(244, 63, 94, 0.45);
+      z-index: 90;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease-out;
+    }
+
+    /* Lapisan Utama */
+    #game-layer {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Bar Atas */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel-bg);
+      padding: 10px 18px;
+      border-bottom: 2px solid rgba(56, 189, 248, 0.35);
+      flex-wrap: wrap;
+      gap: 10px;
+      z-index: 30;
+    }
+
+    .brand-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--gold);
+    }
+
+    .privacy-note {
+      font-size: 0.75rem;
+      color: #cbd5e1;
+    }
+
+    /* Paparan Nyawa (Hati SVG), Masa & Skor */
+    .hud-center {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: rgba(30, 41, 59, 0.9);
+      padding: 6px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .lives-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .heart-svg {
+      width: 28px;
+      height: 28px;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .heart-svg.lost {
+      opacity: 0.2;
+      transform: scale(0.8);
+    }
+
+    .hud-stat {
+      text-align: center;
+    }
+
+    .hud-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .hud-val {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #ffffff;
+    }
+
+    .controls-box {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-ctrl {
+      background: #334155;
+      color: #ffffff;
+      border: 1px solid #475569;
+      padding: 7px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+
+    .btn-ctrl.active-mode {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--sky);
+      color: var(--sky);
+    }
+
+    /* Arena Larian 3 Lorong (Kiri - Tengah - Kanan) */
+    #lanes-wrapper {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      overflow: hidden;
+      border-left: 3px solid rgba(255,255,255,0.2);
+      border-right: 3px solid rgba(255,255,255,0.2);
+    }
+
+    .lane-col {
+      position: relative;
+      height: 100%;
+      border-right: 2px dashed rgba(255, 255, 255, 0.22);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      padding-bottom: 24px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .lane-col:last-child {
+      border-right: none;
+    }
+
+    .lane-col.active-lane {
+      background: linear-gradient(to top, rgba(56, 189, 248, 0.28), rgba(56, 189, 248, 0.04));
+    }
+
+    .lane-header-tag {
+      background: rgba(15, 23, 42, 0.75);
+      color: #94a3b8;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .lane-col.active-lane .lane-header-tag {
+      background: var(--sky);
+      color: #0f172a;
+      border-color: #ffffff;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.8);
+    }
+
+    /* Watak Pelari (Wira Sihat) di Bahagian Bawah */
+    #player-runner {
+      position: absolute;
+      bottom: 22px;
+      width: 110px;
+      height: 110px;
+      z-index: 40;
+      transform: translateX(-50%);
+      transition: left 0.12s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .runner-label {
+      background: var(--gold);
+      color: #0f172a;
+      font-size: 0.72rem;
+      font-weight: 900;
+      padding: 2px 10px;
+      border-radius: 10px;
+      margin-top: -6px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      white-space: nowrap;
+    }
+
+    /* Penunjuk Posisi Kamera Semasa di Atas Skrin */
+    #sensor-dot {
+      position: absolute;
+      top: 52px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: 3px solid #ffffff;
+      transform: translateX(-50%);
+      z-index: 45;
+      pointer-events: none;
+      box-shadow: 0 0 12px var(--gold);
+    }
+
+    /* Makanan yang Jatuh dari Atas */
+    .falling-item {
+      position: absolute;
+      width: 96px;
+      height: 106px;
+      transform: translate(-50%, -50%);
+      z-index: 35;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .item-circle {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    .falling-item.good .item-circle {
+      border: 4px solid var(--healthy-green);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.6);
+    }
+
+    .falling-item.bad .item-circle {
+      border: 4px solid var(--danger-red);
+      box-shadow: 0 0 18px rgba(244, 63, 94, 0.6);
+    }
+
+    .item-tag {
+      margin-top: 4px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 8px;
+      white-space: nowrap;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+    }
+
+    .falling-item.good .item-tag {
+      background: #064e3b;
+      color: #a7f3d0;
+      border: 1px solid var(--healthy-green);
+    }
+
+    .falling-item.bad .item-tag {
+      background: #881337;
+      color: #fecdd3;
+      border: 1px solid var(--danger-red);
+    }
+
+    /* Teks Maklum Balas Terapung Bila Langgar */
+    .floating-popup {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%);
+      padding: 10px 20px;
+      border-radius: 16px;
+      font-size: 1.15rem;
+      font-weight: 900;
+      text-align: center;
+      z-index: 80;
+      pointer-events: none;
+      animation: floatUpFade 1.1s ease-out forwards;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+
+    @keyframes floatUpFade {
+      0% { opacity: 1; transform: translate(-50%, 0) scale(0.9); }
+      25% { opacity: 1; transform: translate(-50%, -15px) scale(1.03); }
+      100% { opacity: 0; transform: translate(-50%, -45px) scale(0.95); }
+    }
+
+    /* Modal Mula, Tamat & Laporan */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.92);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-box {
+      background: #1e293b;
+      border: 3px solid var(--sky);
+      border-radius: 24px;
+      padding: 28px;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .modal-score {
+      font-size: 3rem;
+      font-weight: 900;
+      color: var(--healthy-green);
+      margin: 12px 0;
+    }
+
+    .guide-list {
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 14px;
+      text-align: left;
+      margin: 14px 0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #0f172a;
+      font-weight: 900;
+      font-size: 1.1rem;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .btn-danger {
+      background: var(--danger-red);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 9px 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 700px) {
+      .hud-center { gap: 12px; padding: 6px 12px; }
+      #player-runner { width: 88px; height: 88px; }
+      .falling-item { width: 78px; height: 88px; }
+      .item-circle { width: 64px; height: 64px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Kamera Latar Belakang -->
+  <video id="webcam-video" playsinline></video>
+
+  <!-- Kesan Kilat Merah Bila Hilang Nyawa -->
+  <div id="damage-flash"></div>
+
+  <!-- Antaramuka Utama -->
+  <div id="game-layer">
+    <div class="top-bar">
+      <div class="brand-box">
+        <div class="brand-title">Larian Wira Sihat (3 Lorong)</div>
+        <div class="privacy-note" id="cam-status">Memuatkan kamera... (Boleh juga sentuh lorong / guna anak panah).</div>
+      </div>
+
+      <!-- Nyawa, Masa & Markah -->
+      <div class="hud-center">
+        <div>
+          <div class="hud-label">Nyawa</div>
+          <div class="lives-box" id="lives-container">
+            <!-- 3 Hati SVG -->
+            <svg class="heart-svg" viewBox="0 0 32 32"><path d="M16 28 C16 28 3 19 3 10.5 C3 6 6.5 3 10.5 3 C13.2 3 15.2 4.5 16 6.5 C16.8 4.5 18.8 3 21.5 3 C25.5 3 29 6 29 10.5 C29 19 16 28 16 28 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/></svg>
+            <svg class="heart-svg" viewBox="0 0 32 32"><path d="M16 28 C16 28 3 19 3 10.5 C3 6 6.5 3 10.5 3 C13.2 3 15.2 4.5 16 6.5 C16.8 4.5 18.8 3 21.5 3 C25.5 3 29 6 29 10.5 C29 19 16 28 16 28 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/></svg>
+            <svg class="heart-svg" viewBox="0 0 32 32"><path d="M16 28 C16 28 3 19 3 10.5 C3 6 6.5 3 10.5 3 C13.2 3 15.2 4.5 16 6.5 C16.8 4.5 18.8 3 21.5 3 C25.5 3 29 6 29 10.5 C29 19 16 28 16 28 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/></svg>
+          </div>
+        </div>
+
+        <div class="hud-stat">
+          <div class="hud-label">Masa</div>
+          <div class="hud-val" id="timer-val">60s</div>
+        </div>
+
+        <div class="hud-stat">
+          <div class="hud-label">Markah</div>
+          <div class="hud-val" id="score-val">0</div>
+        </div>
+      </div>
+
+      <div class="controls-box">
+        <button class="btn-ctrl active-mode" id="btn-track-mode" onclick="toggleTrackingMode()">Kamera: Ikut Badan</button>
+        <button class="btn-ctrl" id="btn-open-report" onclick="openReportModal()">Laporan (0)</button>
+        <button class="btn-ctrl" onclick="startGame()">Mula Semula</button>
+      </div>
+    </div>
+
+    <!-- Gelanggang 3 Lorong -->
+    <div id="lanes-wrapper">
+      <!-- Titik Penunjuk Sensor Kamera -->
+      <div id="sensor-dot" style="left: 50%;"></div>
+
+      <!-- Lorong 0: KIRI -->
+      <div class="lane-col" data-lane="0" onclick="setPlayerLane(0)">
+        <div class="lane-header-tag">Lorong Kiri</div>
+      </div>
+
+      <!-- Lorong 1: TENGAH -->
+      <div class="lane-col active-lane" data-lane="1" onclick="setPlayerLane(1)">
+        <div class="lane-header-tag">Lorong Tengah</div>
+      </div>
+
+      <!-- Lorong 2: KANAN -->
+      <div class="lane-col" data-lane="2" onclick="setPlayerLane(2)">
+        <div class="lane-header-tag">Lorong Kanan</div>
+      </div>
+
+      <!-- Watak Pelari (Wira Sihat SVG) -->
+      <div id="player-runner" style="left: 50%;">
+        <svg viewBox="0 0 100 100" width="90" height="90">
+          <!-- Bakul / Perisai Wira -->
+          <circle cx="50" cy="50" r="42" fill="#0284c7" stroke="#facc15" stroke-width="5"/>
+          <circle cx="50" cy="36" r="14" fill="#fde68a" stroke="#0f172a" stroke-width="3"/>
+          <path d="M26 78 C26 56, 74 56, 74 78 Z" fill="#10b981" stroke="#0f172a" stroke-width="3"/>
+          <path d="M36 66 L46 75 L64 57" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <div class="runner-label">WIRA SIHAT</div>
+      </div>
+
+      <!-- Bekas Makanan Jatuh -->
+      <div id="items-layer"></div>
+    </div>
+  </div>
+
+  <!-- Modal Mula Permainan -->
+  <div class="modal-overlay" id="start-modal">
+    <div class="modal-box">
+      <div class="modal-title">Misi Larian Wira Sihat!</div>
+      <p style="color: #cbd5e1; font-size: 0.95rem;">Ala Subway Surfers — Guna Pergerakan Kamera</p>
+      <div class="guide-list">
+        <div><strong>1. Cara Kawal:</strong> Gerakkan badan (atau tangan) anda ke <strong>Kiri, Tengah, atau Kanan</strong> di hadapan kamera.</div>
+        <div style="margin-top: 6px; color: #34d399;"><strong>2. Kutip Buah & Sayur:</strong> Dapat <strong>+10 Markah</strong> untuk badan sihat & kuat!</div>
+        <div style="margin-top: 6px; color: #fb7185;"><strong>3. Elak Makanan Tidak Berkhasiat:</strong> Jika terlanggar air gas, sosej atau donat, <strong>Nyawa akan tolak 1!</strong></div>
+      </div>
+      <button class="btn-primary" onclick="startGame()">Mula Larian Sekarang!</button>
+    </div>
+  </div>
+
+  <!-- Modal Tamat Permainan -->
+  <div class="modal-overlay" id="end-modal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-title" id="end-title">Misi Selesai!</div>
+      <p style="color: #cbd5e1;" id="end-subtitle">Jumlah Markah Larian Anda:</p>
+      <div class="modal-score" id="final-score">0</div>
+      <p id="final-message" style="color: #f8fafc; line-height: 1.5; font-size: 1rem;"></p>
+      <button class="btn-primary" onclick="startGame()">Main Lagi (Pemain Seterusnya)</button>
+    </div>
+  </div>
+
+  <!-- Modal Laporan Output Program -->
+  <div class="modal-overlay" id="report-modal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-title">Rekod Output: Larian Wira Sihat</div>
+      <p style="color: #94a3b8; font-size: 0.85rem;">Data disimpan secara tempatan di dalam peranti ini.</p>
+      <div class="guide-list" id="report-summary-box">Memuatkan...</div>
+      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn-primary" style="margin-top: 0;" onclick="downloadCSVReport()">Muat Turun CSV (Excel)</button>
+        <button class="btn-ctrl" style="padding: 12px 20px;" onclick="closeReportModal()">Tutup</button>
+      </div>
+      <div>
+        <button class="btn-danger" onclick="clearLocalRecords()">Padam Semua Rekod (Reset Program)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. KOLEKSI BUAH/SAYUR (BAIK) & MAKANAN TIDAK BERKHASIAT (ELAK) ---
+    const ITEMS_CATALOG = [
+      // BUAH & SAYUR (KUTIP = +10 MARKAH)
+      {
+        name: "Brokoli Segar",
+        isHealthy: true,
+        msg: "+10 Markah! Brokoli tinggi serat & vitamin!",
+        svg: `<svg viewBox="0 0 100 100"><rect x="40" y="55" width="20" height="32" rx="4" fill="#84cc16" stroke="#0f172a" stroke-width="4"/><circle cx="35" cy="44" r="18" fill="#15803d" stroke="#0f172a" stroke-width="4"/><circle cx="65" cy="44" r="18" fill="#15803d" stroke="#0f172a" stroke-width="4"/><circle cx="50" cy="30" r="20" fill="#22c55e" stroke="#0f172a" stroke-width="4"/></svg>`
+      },
+      {
+        name: "Lobak Merah",
+        isHealthy: true,
+        msg: "+10 Markah! Lobak baik untuk kesihatan mata!",
+        svg: `<svg viewBox="0 0 100 100"><path d="M50 18 L40 8 M50 18 L50 6 M50 18 L60 8" stroke="#16a34a" stroke-width="5" stroke-linecap="round"/><path d="M32 22 L68 22 L50 90 Z" fill="#f97316" stroke="#0f172a" stroke-width="4" stroke-linejoin="round"/></svg>`
+      },
+      {
+        name: "Epal Merah",
+        isHealthy: true,
+        msg: "+10 Markah! Buah epal kaya dengan vitamin!",
+        svg: `<svg viewBox="0 0 100 100"><path d="M50 28 C34 18, 18 32, 22 58 C25 80, 42 88, 50 82 C58 88, 75 80, 78 58 C82 32, 66 18, 50 28 Z" fill="#ef4444" stroke="#0f172a" stroke-width="4"/><path d="M52 20 C62 14, 70 20, 60 26 Z" fill="#22c55e"/></svg>`
+      },
+      {
+        name: "Buah Pisang",
+        isHealthy: true,
+        msg: "+10 Markah! Pisang beri tenaga semula jadi!",
+        svg: `<svg viewBox="0 0 100 100"><path d="M24 72 C48 82, 78 65, 82 24 C72 20, 70 24, 66 32 C60 56, 42 64, 22 60 Z" fill="#facc15" stroke="#0f172a" stroke-width="4"/></svg>`
+      },
+      {
+        name: "Tembikai Segar",
+        isHealthy: true,
+        msg: "+10 Markah! Tembikai kaya air & vitamin C!",
+        svg: `<svg viewBox="0 0 100 100"><path d="M16 36 C16 72, 84 72, 84 36 Z" fill="#22c55e" stroke="#0f172a" stroke-width="4"/><path d="M24 36 C24 62, 76 62, 76 36 Z" fill="#f43f5e"/><circle cx="42" cy="46" r="3" fill="#0f172a"/><circle cx="58" cy="46" r="3" fill="#0f172a"/><circle cx="50" cy="52" r="3" fill="#0f172a"/></svg>`
+      },
+
+      // MAKANAN TIDAK BERKHASIAT (ELAK = -1 NYAWA)
+      {
+        name: "Air Gas Manis",
+        isHealthy: false,
+        msg: "-1 Nyawa! Air berkarbonat tinggi gula tersembunyi!",
+        svg: `<svg viewBox="0 0 100 100"><rect x="30" y="20" width="40" height="64" rx="6" fill="#ef4444" stroke="#0f172a" stroke-width="4"/><path d="M30 44 L70 56" stroke="#ffffff" stroke-width="6"/></svg>`
+      },
+      {
+        name: "Sosej Proses",
+        isHealthy: false,
+        msg: "-1 Nyawa! Makanan ultra-proses tinggi garam & lemak!",
+        svg: `<svg viewBox="0 0 100 100"><path d="M24 68 C16 58, 28 24, 68 24 C82 24, 86 40, 72 48 C52 58, 40 78, 24 68 Z" fill="#b91c1c" stroke="#0f172a" stroke-width="4"/><path d="M32 52 Q48 40 66 36" fill="none" stroke="#facc15" stroke-width="4" stroke-linecap="round"/></svg>`
+      },
+      {
+        name: "Donat Bergula",
+        isHealthy: false,
+        msg: "-1 Nyawa! Donat manis tinggi gula & kalori!",
+        svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="32" fill="#f59e0b" stroke="#0f172a" stroke-width="4"/><circle cx="50" cy="50" r="24" fill="#ec4899"/><circle cx="50" cy="50" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="4"/></svg>`
+      },
+      {
+        name: "Kentang Goreng",
+        isHealthy: false,
+        msg: "-1 Nyawa! Tinggi minyak gorengan & garam!",
+        svg: `<svg viewBox="0 0 100 100"><rect x="34" y="16" width="8" height="40" fill="#facc15" stroke="#0f172a" stroke-width="3"/><rect x="46" y="12" width="8" height="44" fill="#facc15" stroke="#0f172a" stroke-width="3"/><rect x="58" y="18" width="8" height="38" fill="#facc15" stroke="#0f172a" stroke-width="3"/><path d="M26 44 L74 44 L66 86 L34 86 Z" fill="#ef4444" stroke="#0f172a" stroke-width="4"/></svg>`
+      },
+      {
+        name: "Gula Lolipop",
+        isHealthy: false,
+        msg: "-1 Nyawa! Gula-gula berlebihan rosakkan gigi!",
+        svg: `<svg viewBox="0 0 100 100"><rect x="47" y="54" width="6" height="36" fill="#cbd5e1" stroke="#0f172a" stroke-width="3"/><circle cx="50" cy="38" r="24" fill="#a855f7" stroke="#0f172a" stroke-width="4"/><circle cx="50" cy="38" r="12" fill="none" stroke="#ffffff" stroke-width="4"/></svg>`
+      }
+    ];
+
+    // --- 2. PENJANA BUNYI (WEB AUDIO API) ---
+    let audioCtx = null;
+    function playSound(type) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'collect') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(587.33, now);
+          osc.frequency.setValueAtTime(880, now + 0.08);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'hit') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(190, now);
+          osc.frequency.linearRampToValueAtTime(110, now + 0.35);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.38);
+          osc.start(now);
+          osc.stop(now + 0.38);
+        } else if (type === 'win') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.1);
+          osc.frequency.setValueAtTime(783.99, now + 0.2);
+          osc.frequency.setValueAtTime(1046.5, now + 0.3);
+          gain.gain.setValueAtTime(0.28, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.55);
+          osc.start(now);
+          osc.stop(now + 0.55);
+        }
+      } catch (e) {}
+    }
+
+    // --- 3. PEMBOLEHUBAH KEADAAN PERMAINAN ---
+    const LANE_CENTERS = [16.666, 50.0, 83.333]; // Peratus posisi Kiri, Tengah, Kanan
+    let currentLane = 1; // 0 = Kiri, 1 = Tengah, 2 = Kanan
+    let score = 0;
+    let lives = 3;
+    let timeLeft = 60;
+    let isRunning = false;
+    let trackingMode = "BODY"; // "BODY" (Ikut Kepala/Bahu) atau "HAND" (Ikut Tangan)
+    let activeControlUsed = "Sentuhan / Papan Kekunci";
+
+    let activeItems = [];
+    let lastSpawnTime = 0;
+    let lastFrameTime = 0;
+    let timerInterval = null;
+
+    // Elemen DOM
+    const lanesWrapper = document.getElementById('lanes-wrapper');
+    const laneCols = document.querySelectorAll('.lane-col');
+    const playerRunnerEl = document.getElementById('player-runner');
+    const sensorDotEl = document.getElementById('sensor-dot');
+    const itemsLayerEl = document.getElementById('items-layer');
+    const scoreValEl = document.getElementById('score-val');
+    const timerValEl = document.getElementById('timer-val');
+    const heartSvgs = document.querySelectorAll('.heart-svg');
+    const damageFlashEl = document.getElementById('damage-flash');
+    const startModalEl = document.getElementById('start-modal');
+    const endModalEl = document.getElementById('end-modal');
+    const reportModalEl = document.getElementById('report-modal');
+
+    // Tukar Lorong Pemain
+    function setPlayerLane(laneIndex) {
+      if (laneIndex < 0 || laneIndex > 2) return;
+      currentLane = laneIndex;
+      playerRunnerEl.style.left = `${LANE_CENTERS[currentLane]}%`;
+
+      laneCols.forEach((col, idx) => {
+        if (idx === currentLane) col.classList.add('active-lane');
+        else col.classList.remove('active-lane');
+      });
+    }
+
+    // Tukar Mod Kamera: Ikut Badan vs Ikut Tangan
+    function toggleTrackingMode() {
+      const btn = document.getElementById('btn-track-mode');
+      if (trackingMode === "BODY") {
+        trackingMode = "HAND";
+        btn.textContent = "Kamera: Ikut Tangan";
+      } else {
+        trackingMode = "BODY";
+        btn.textContent = "Kamera: Ikut Badan";
+      }
+    }
+
+    // Mulakan Permainan Baru
+    function startGame() {
+      score = 0;
+      lives = 3;
+      timeLeft = 60;
+      isRunning = true;
+      activeItems = [];
+      itemsLayerEl.innerHTML = '';
+
+      scoreValEl.textContent = score;
+      timerValEl.textContent = `${timeLeft}s`;
+      updateLivesUI();
+      setPlayerLane(1);
+
+      startModalEl.style.display = 'none';
+      endModalEl.style.display = 'none';
+      reportModalEl.style.display = 'none';
+
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!isRunning) return;
+        timeLeft--;
+        timerValEl.textContent = `${timeLeft}s`;
+        if (timeLeft <= 0) {
+          endGame(true);
+        }
+      }, 1000);
+
+      lastFrameTime = performance.now();
+      lastSpawnTime = lastFrameTime;
+    }
+
+    function updateLivesUI() {
+      heartSvgs.forEach((svg, idx) => {
+        if (idx < lives) svg.classList.remove('lost');
+        else svg.classList.add('lost');
+      });
+    }
+
+    // Jana Makanan Jatuh (Elak 3 Makanan Tak Sihat Sebaris)
+    function spawnRow() {
+      const healthyPool = ITEMS_CATALOG.filter(i => i.isHealthy);
+      const junkPool = ITEMS_CATALOG.filter(i => !i.isHealthy);
+
+      // Tentukan sama ada jana 1 atau 2 objek serentak
+      const count = Math.random() < 0.45 ? 2 : 1;
+      const availableLanes = [0, 1, 2];
+      let junkCountInRow = 0;
+
+      for (let i = 0; i < count; i++) {
+        const randIdx = Math.floor(Math.random() * availableLanes.length);
+        const chosenLane = availableLanes.splice(randIdx, 1)[0];
+
+        // Pastikan sekurang-kurangnya ada buah/sayur dan bukan semua halangan
+        let pickHealthy = Math.random() < 0.55;
+        if (junkCountInRow >= 1 && Math.random() < 0.7) pickHealthy = true;
+
+        const pool = pickHealthy ? healthyPool : junkPool;
+        if (!pickHealthy) junkCountInRow++;
+
+        const template = pool[Math.floor(Math.random() * pool.length)];
+
+        const el = document.createElement('div');
+        el.className = `falling-item ${template.isHealthy ? 'good' : 'bad'}`;
+        el.style.left = `${LANE_CENTERS[chosenLane]}%`;
+        el.style.top = `-60px`;
+        el.innerHTML = `
+          <div class="item-circle">${template.svg}</div>
+          <div class="item-tag">${template.name}</div>
+        `;
+        itemsLayerEl.appendChild(el);
+
+        activeItems.push({
+          lane: chosenLane,
+          y: -60,
+          isHealthy: template.isHealthy,
+          msg: template.msg,
+          el: el
+        });
+      }
+    }
+
+    function showFloatingFeedback(text, isGood) {
+      const pop = document.createElement('div');
+      pop.className = 'floating-popup';
+      pop.style.background = isGood ? 'rgba(6, 78, 59, 0.95)' : 'rgba(136, 19, 55, 0.95)';
+      pop.style.border = `3px solid ${isGood ? '#10b981' : '#f43f5e'}`;
+      pop.style.color = '#ffffff';
+      pop.textContent = text;
+      lanesWrapper.appendChild(pop);
+      setTimeout(() => pop.remove(), 1100);
+    }
+
+    // Gelung Utama Permainan (60fps)
+    function gameLoop(timestamp) {
+      const dt = (timestamp - lastFrameTime) / 1000;
+      lastFrameTime = timestamp;
+
+      if (isRunning) {
+        const arenaHeight = lanesWrapper.clientHeight;
+        // Kelajuan meningkat sedikit bila masa semakin suntuk
+        const speedMultiplier = 1 + ((60 - timeLeft) / 60) * 0.45;
+        const fallSpeed = (arenaHeight * 0.42) * speedMultiplier;
+        const spawnInterval = Math.max(780, 1250 - (60 - timeLeft) * 7);
+
+        if (timestamp - lastSpawnTime >= spawnInterval) {
+          spawnRow();
+          lastSpawnTime = timestamp;
+        }
+
+        // Zon Pelanggaran Watak di Bawah
+        const hitZoneTop = arenaHeight - 135;
+        const hitZoneBottom = arenaHeight - 25;
+
+        for (let i = activeItems.length - 1; i >= 0; i--) {
+          const item = activeItems[i];
+          item.y += fallSpeed * dt;
+          item.el.style.top = `${item.y}px`;
+
+          // Semak Pelanggaran dengan Watak Pemain
+          if (item.y >= hitZoneTop && item.y <= hitZoneBottom && item.lane === currentLane) {
+            if (item.isHealthy) {
+              score += 10;
+              scoreValEl.textContent = score;
+              playSound('collect');
+              showFloatingFeedback(item.msg, true);
+            } else {
+              lives--;
+              updateLivesUI();
+              playSound('hit');
+              showFloatingFeedback(item.msg, false);
+              damageFlashEl.style.opacity = '1';
+              setTimeout(() => damageFlashEl.style.opacity = '0', 180);
+
+              if (lives <= 0) {
+                item.el.remove();
+                activeItems.splice(i, 1);
+                endGame(false);
+                break;
+              }
+            }
+            item.el.remove();
+            activeItems.splice(i, 1);
+            continue;
+          }
+
+          // Buang jika sudah lepas bawah skrin
+          if (item.y > arenaHeight + 70) {
+            item.el.remove();
+            activeItems.splice(i, 1);
+          }
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function endGame(survivedFullTime) {
+      isRunning = false;
+      if (timerInterval) clearInterval(timerInterval);
+      playSound('win');
+
+      const titleEl = document.getElementById('end-title');
+      const msgEl = document.getElementById('final-message');
+      document.getElementById('final-score').textContent = `${score} Markah`;
+
+      if (survivedFullTime) {
+        titleEl.textContent = "Tahniah! Misi 60 Saat Berjaya!";
+        titleEl.style.color = "#facc15";
+        msgEl.textContent = `Hebat! Anda berjaya mengelak makanan tidak berkhasiat dan mengumpul banyak sayur serta buah-buahan dengan baki ${lives} nyawa!`;
+      } else {
+        titleEl.textContent = "Nyawa Habis! Cuba Lagi!";
+        titleEl.style.color = "#f43f5e";
+        msgEl.textContent = "Ingat, makanan tinggi gula dan makanan ultra-proses perlu dielakkan. Jom cuba sekali lagi dan kutip lebih banyak buah & sayur!";
+      }
+
+      endModalEl.style.display = 'flex';
+      saveLocalRecord(score, lives, survivedFullTime ? "Selesai 60s" : "Habis Nyawa");
+    }
+
+    // --- 4. KAWALAN PAPAN KEKUNCI (ANAK PANAH KIRI / KANAN) ---
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        setPlayerLane(currentLane - 1);
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        setPlayerLane(currentLane + 1);
+      }
+    });
+
+    // --- 5. KAWALAN KAMERA MEDIAPIPE POSE (BADAN ATAU TANGAN) ---
+    const videoElement = document.getElementById('webcam-video');
+    const camStatusEl = document.getElementById('cam-status');
+
+    function onPoseResults(results) {
+      if (!results.poseLandmarks || results.poseLandmarks.length === 0) return;
+
+      const lm = results.poseLandmarks;
+      let rawX = null;
+
+      if (trackingMode === "BODY") {
+        // Landmark 0 = Hidung / Kepala (Paling tepat bila pemain gerak badan Kiri-Tengah-Kanan)
+        if (lm[0]) {
+          rawX = 1 - lm[0].x; // Cermin
+          activeControlUsed = "Kamera (Gerak Badan)";
+        }
+      } else {
+        // Mod Tangan: Ambil tangan (Landmark 19 atau 20) yang diangkat lebih tinggi
+        const leftHand = lm[19];
+        const rightHand = lm[20];
+        if (leftHand && rightHand) {
+          const chosen = leftHand.y < rightHand.y ? leftHand : rightHand;
+          rawX = 1 - chosen.x;
+          activeControlUsed = "Kamera (Gerak Tangan)";
+        }
+      }
+
+      if (rawX !== null) {
+        const clampedPercent = Math.max(5, Math.min(95, rawX * 100));
+        sensorDotEl.style.left = `${clampedPercent}%`;
+
+        // Zon Sensitif 3 Lorong (Supaya tak perlu melangkah terlalu jauh di depan booth)
+        if (rawX < 0.38) {
+          if (currentLane !== 0) setPlayerLane(0);
+        } else if (rawX > 0.62) {
+          if (currentLane !== 2) setPlayerLane(2);
+        } else {
+          if (currentLane !== 1) setPlayerLane(1);
+        }
+      }
+    }
+
+    async function initCamera() {
+      try {
+        const pose = new Pose({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+
+        pose.setOptions({
+          modelComplexity: 0, // Pantas & lancar untuk tablet dan laptop
+          smoothLandmarks: true,
+          minDetectionConfidence: 0.55,
+          minTrackingConfidence: 0.55
+        });
+
+        pose.onResults(onPoseResults);
+
+        const camera = new Camera(videoElement, {
+          onFrame: async () => {
+            await pose.send({ image: videoElement });
+          },
+          width: 640,
+          height: 480
+        });
+
+        await camera.start();
+        camStatusEl.textContent = "Kamera Aktif: Gerakkan badan ke Kiri, Tengah atau Kanan! (Tiada video dirakam).";
+        camStatusEl.style.color = "#facc15";
+      } catch (err) {
+        console.warn("Kamera tidak dapat diakses, guna sentuhan/kekunci:", err);
+        camStatusEl.textContent = "Mod Sentuhan/Kekunci Aktif (Sentuh Lorong Kiri, Tengah atau Kanan).";
+      }
+    }
+
+    // --- 6. SISTEM REKOD LAPORAN TEMPATAN (LOCALSTORAGE CSV ASING) ---
+    const STORAGE_KEY = "rekod_larian_wira_sihat";
+
+    function getRecords() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveLocalRecord(finalScore, remainingLives, statusText) {
+      const existing = getRecords();
+      const now = new Date();
+      const tarikh = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kuching' });
+      const masa = now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kuching' });
+
+      existing.push({
+        bil: existing.length + 1,
+        tarikhMasa: `${tarikh} ${masa}`,
+        markah: finalScore,
+        bakiNyawa: remainingLives,
+        status: statusText,
+        modKawalan: activeControlUsed
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+      updateReportButtonUI();
+    }
+
+    function updateReportButtonUI() {
+      const existing = getRecords();
+      const btn = document.getElementById('btn-open-report');
+      if (btn) btn.textContent = `Laporan (${existing.length})`;
+    }
+
+    function openReportModal() {
+      const existing = getRecords();
+      const box = document.getElementById('report-summary-box');
+
+      if (existing.length === 0) {
+        box.innerHTML = "Belum ada rekod pemain bagi modul Larian Wira Sihat ini.";
+      } else {
+        const total = existing.length;
+        const avg = (existing.reduce((a, r) => a + Number(r.markah), 0) / total).toFixed(1);
+        const survivedCount = existing.filter(r => r.status === "Selesai 60s").length;
+
+        box.innerHTML = `
+          <div><strong>Modul:</strong> Larian Wira Sihat (3 Lorong)</div>
+          <div><strong>Jumlah Pemain:</strong> ${total} orang</div>
+          <div><strong>Purata Markah:</strong> ${avg} markah</div>
+          <div><strong>Berjaya Bertahan 60 Saat:</strong> ${survivedCount} orang</div>
+        `;
+      }
+      reportModalEl.style.display = 'flex';
+    }
+
+    function closeReportModal() {
+      reportModalEl.style.display = 'none';
+    }
+
+    function downloadCSVReport() {
+      const existing = getRecords();
+      if (existing.length === 0) {
+        alert("Tiada data pemain untuk dimuat turun.");
+        return;
+      }
+
+      let csv = "Bil,Tarikh dan Masa,Markah,Baki Nyawa,Status Tamat,Mod Kawalan\n";
+      existing.forEach(r => {
+        csv += `${r.bil},"${r.tarikhMasa}",${r.markah},${r.bakiNyawa},"${r.status}","${r.modKawalan}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "Laporan_Output_Larian_Sihat.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function clearLocalRecords() {
+      if (confirm("Padam semua rekod pemain bagi modul Larian Wira Sihat ini?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        updateReportButtonUI();
+        openReportModal();
+      }
+    }
+
+    // Mulakan Enjin
+    updateReportButtonUI();
+    requestAnimationFrame(gameLoop);
+    initCamera();
+  </script>
+</body>
+</html>
