@@ -275,6 +275,50 @@
     }
     #load-warning { display: none; color: #fda4af; font-size: 0.85rem; margin-top: 10px; }
 
+    /* Bar tenaga langkah (dalam paparan kamera) */
+    #effort-wrap {
+      position: absolute;
+      top: 24px; left: 6px; right: 6px;
+      height: 9px;
+      background: rgba(15,23,42,0.75);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+    #effort-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #facc15);
+      transition: width 0.15s linear;
+    }
+
+    /* Mesej "jalan setempat" bila watak berhenti */
+    #walk-prompt {
+      position: fixed;
+      left: 50%;
+      top: 40%;
+      transform: translate(-50%, -50%);
+      z-index: 70;
+      background: rgba(15,23,42,0.88);
+      border: 3px solid var(--gold);
+      color: #fff;
+      padding: 14px 26px;
+      border-radius: 18px;
+      font-weight: 900;
+      font-size: 1.35rem;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s;
+      max-width: 90vw;
+    }
+    #walk-prompt small { display: block; font-size: 0.8rem; color: #cbd5e1; font-weight: 700; margin-top: 4px; }
+    #walk-prompt.show { opacity: 1; animation: walkPulse 1s ease-in-out infinite; }
+    @keyframes walkPulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.06); }
+    }
+
     @media (max-width: 700px) {
       .brand-box { display: none; }
       .hud-center { gap: 10px; padding: 5px 10px; }
@@ -313,10 +357,15 @@
         <div class="hud-label">Markah</div>
         <div class="hud-val" id="score-val">0</div>
       </div>
+      <div class="hud-stat">
+        <div class="hud-label">Langkah</div>
+        <div class="hud-val" id="steps-val">0</div>
+      </div>
     </div>
 
     <div class="controls-box">
       <button class="btn-ctrl active-mode" id="btn-track-mode" onclick="toggleTrackingMode()">Kamera: Ikut Badan</button>
+      <button class="btn-ctrl" id="btn-step-mode" onclick="toggleStepMode()">Larian: Auto (tiada kamera)</button>
       <button class="btn-ctrl" id="btn-cam-view" onclick="toggleCamPanel()">Sorok Kamera</button>
       <button class="btn-ctrl" id="btn-open-report" onclick="openReportModal()">Laporan (0)</button>
       <button class="btn-ctrl" onclick="startGame()">Mula Semula</button>
@@ -334,7 +383,11 @@
     <div id="sensor-dot"></div>
     <div class="cam-title">KAMERA</div>
     <div id="gesture-tag">LOMPAT!</div>
+    <div id="effort-wrap"><div id="effort-bar"></div></div>
   </div>
+
+  <!-- Mesej bila watak berhenti (pemain tak melangkah) -->
+  <div id="walk-prompt">🚶 Jalan pantas setempat untuk lari!<small>Angkat lutut kiri, kanan, kiri, kanan... (masa tetap berjalan)</small></div>
 
   <!-- Modal Mula -->
   <div class="modal-overlay" id="start-modal">
@@ -342,10 +395,12 @@
       <div class="modal-title">Misi Larian Wira Sihat!</div>
       <p style="color: #cbd5e1; font-size: 0.95rem;">Lari di landasan kereta api, kutip makanan sihat!</p>
       <div class="guide-list">
-        <div><strong>1. Tukar lorong:</strong> Gerak badan ke <strong>Kiri / Tengah / Kanan</strong> depan kamera (atau anak panah ◀ ▶ / swipe).</div>
-        <div style="margin-top: 6px;"><strong>2. Lompat:</strong> Lompat betul-betul depan kamera (atau ▲ / Space / swipe atas). <strong>Guling:</strong> Cangkung (atau ▼ / swipe bawah).</div>
-        <div style="margin-top: 6px; color: #34d399;"><strong>3. Kutip buah & sayur</strong> (label hijau): <strong>+10 Markah</strong>.</div>
-        <div style="margin-top: 6px; color: #fb7185;"><strong>4. Elak makanan tak sihat</strong> (label merah) & <strong>kereta api</strong>: <strong>-1 Nyawa</strong>. Lompat untuk melepasi makanan tak sihat!</div>
+        <div style="color: #facc15;"><strong>1. Jalan pantas setempat</strong> (angkat lutut kiri-kanan di tempat yang sama) supaya Wira berlari. <strong>Berdiri diam = Wira berhenti</strong>, tapi masa tetap berjalan!</div>
+        <div style="margin-top: 6px;"><strong>2. Tukar lorong:</strong> Gerak badan ke <strong>Kiri / Tengah / Kanan</strong> depan kamera (atau anak panah ◀ ▶ / swipe).</div>
+        <div style="margin-top: 6px;"><strong>3. Lompat:</strong> Lompat depan kamera (atau ▲ / Space / swipe atas). <strong>Guling:</strong> Cangkung (atau ▼ / swipe bawah).</div>
+        <div style="margin-top: 6px; color: #34d399;"><strong>4. Kutip buah & sayur</strong> (label hijau): <strong>+10 Markah</strong>.</div>
+        <div style="margin-top: 6px; color: #fb7185;"><strong>5. Elak makanan tak sihat</strong> (label merah) & <strong>kereta api</strong>: <strong>-1 Nyawa</strong>.</div>
+        <div style="margin-top: 6px; color: #94a3b8; font-size: 0.85rem;">Tip: berdiri 2 hingga 3 meter dari kamera supaya badan sampai ke lutut nampak dalam skrin kamera.</div>
       </div>
       <button class="btn-primary" onclick="startGame()">Mula Larian Sekarang!</button>
       <div id="load-warning">Enjin 3D gagal dimuatkan. Pastikan peranti disambung ke internet, kemudian muat semula halaman.</div>
@@ -471,6 +526,18 @@
     let speed = IDLE_SPEED, distSinceSpawn = 0, shake = 0;
     let lastShownSecond = 60;
 
+    // Kawalan langkah (jalan pantas / jogging setempat)
+    const TARGET_CADENCE = 1.5;   // langkah sesaat untuk laju penuh (jalan pantas setempat)
+    const STOP_AFTER_MS = 1100;   // tiada langkah selama ini = Wira berhenti
+    let cameraReady = false;      // kamera & MediaPipe berjaya dimulakan
+    let keyboardSteps = false;    // ujian tanpa kamera: kekunci F / J sebagai langkah
+    let stepMode = true;          // true = perlu melangkah untuk lari, false = auto lari
+    let usedStepMode = false;     // mod yang digunakan dalam pusingan semasa (untuk rekod)
+    let effort = 1;               // 0 = berhenti, 1 = laju penuh
+    let stepTimes = [];
+    let lastStepTime = 0;
+    let totalSteps = 0;
+
     const player = { x: 0, y: 0, vy: 0, roll: 0, inv: 0, phase: 0 };
     let items = [];
     let trains = [];
@@ -486,6 +553,10 @@
     const sensorDotEl = document.getElementById('sensor-dot');
     const gestureTagEl = document.getElementById('gesture-tag');
     const zoneLabels = document.querySelectorAll('.cam-zone-label');
+    const stepsValEl = document.getElementById('steps-val');
+    const effortBarEl = document.getElementById('effort-bar');
+    const walkPromptEl = document.getElementById('walk-prompt');
+    const stepModeBtn = document.getElementById('btn-step-mode');
 
     // =====================================================================
     // 4. PENYEDIAAN DUNIA 3D
@@ -954,63 +1025,174 @@
     }
 
     // =====================================================================
-    // 5. WATAK PELARI 3D (dilihat dari belakang)
+    // 5. WATAK "WIRA SIHAT" 3D: superhero kanak-kanak gaya kartun
+    //    (kepala besar, topeng mata hijau, jubah merah berkibar, sut biru)
     // =====================================================================
+    const CAPE_H = 1.15;
+
+    function makeCapeTexture() {
+      const [c, g] = makeCanvas(256, 320);
+      const grad = g.createLinearGradient(0, 0, 0, 320);
+      grad.addColorStop(0, '#ef4444');
+      grad.addColorStop(1, '#b91c1c');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 256, 320);
+      // Lambang wira: bulatan kuning dengan epal hijau
+      g.beginPath();
+      g.arc(128, 100, 54, 0, Math.PI * 2);
+      g.fillStyle = '#facc15';
+      g.fill();
+      g.lineWidth = 7;
+      g.strokeStyle = '#ffffff';
+      g.stroke();
+      g.beginPath();
+      g.arc(115, 108, 23, 0, Math.PI * 2);
+      g.arc(141, 108, 23, 0, Math.PI * 2);
+      g.fillStyle = '#16a34a';
+      g.fill();
+      g.fillStyle = '#78350f';
+      g.fillRect(126, 70, 5, 18);
+      g.beginPath();
+      g.ellipse(143, 74, 15, 7, -0.6, 0, Math.PI * 2);
+      g.fillStyle = '#4ade80';
+      g.fill();
+      // Jalur kuning di hujung jubah
+      g.fillStyle = '#facc15';
+      g.fillRect(0, 298, 256, 22);
+      return c;
+    }
+
     function buildRunner() {
-      const lam = c => new THREE.MeshLambertMaterial({ color: c });
+      const toon = (c, extra = {}) => new THREE.MeshToonMaterial({ color: c, ...extra });
       const M = {
-        skin: lam(0xf1c27d), hoodie: lam(0x22c55e), jeans: lam(0x1d4ed8),
-        cap: lam(0xef4444), pack: lam(0xfacc15), shoe: lam(0xffffff), hair: lam(0x3b2414)
+        skin: toon(0xf2c29b), suit: toon(0x2563eb), shorts: toon(0x1e3a8a),
+        white: toon(0xf8fafc), belt: toon(0xfacc15), hair: toon(0x2b1a12),
+        mask: toon(0x22c55e, { side: THREE.DoubleSide }), eye: toon(0xffffff), pupil: toon(0x111827)
       };
+      const mesh = (geo, mat, x = 0, y = 0, z = 0) => {
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(x, y, z);
+        return m;
+      };
+      const capsule = (r, len) => new THREE.CapsuleGeometry(r, len, 6, 14);
+
       const root = new THREE.Group();
       const body = new THREE.Group();
       root.add(body);
 
-      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.85, 0.45), M.hoodie);
-      torso.position.y = 1.45;
-      const hood = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.22, 0.2), M.hoodie);
-      hood.position.set(0, 1.86, 0.18);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14), M.skin);
-      head.position.y = 2.17;
-      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14), M.hair);
-      hair.scale.set(1.02, 0.7, 1.02);
-      hair.position.set(0, 2.1, 0.06);
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.32, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), M.cap);
-      cap.position.y = 2.2;
-      const brim = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.05, 0.32), M.cap);
-      brim.position.set(0, 2.21, 0.36); // topi terbalik ke belakang, nampak dari kamera
-      const pack = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.62, 0.26), M.pack);
-      pack.position.set(0, 1.48, 0.34);
-      const packPocket = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.06), lam(0xf59e0b));
-      packPocket.position.set(0, 1.32, 0.49);
-      body.add(torso, hood, hair, head, cap, brim, pack, packPocket);
+      // Badan bulat
+      const torso = mesh(new THREE.SphereGeometry(0.4, 24, 18), M.suit, 0, 1.27, 0);
+      torso.scale.set(1, 1.1, 0.82);
+      const belt = mesh(new THREE.TorusGeometry(0.31, 0.05, 10, 28), M.belt, 0, 0.98, 0);
+      belt.rotation.x = Math.PI / 2;
+      belt.scale.set(1, 0.82, 1);
+      const shorts = mesh(new THREE.SphereGeometry(0.33, 20, 14), M.shorts, 0, 0.86, 0);
+      shorts.scale.set(1, 0.75, 0.85);
+      const neck = mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.2, 12), M.skin, 0, 1.74, 0);
 
-      function limb(x, y, len, w, mat, endMesh) {
-        const pivot = new THREE.Group();
-        pivot.position.set(x, y, 0);
-        const m = new THREE.Mesh(new THREE.BoxGeometry(w, len, w), mat);
-        m.position.y = -len / 2;
-        pivot.add(m);
-        if (endMesh) pivot.add(endMesh);
-        body.add(pivot);
-        return pivot;
+      // Kepala besar (gaya chibi)
+      const HEAD_Y = 2.12;
+      const head = mesh(new THREE.SphereGeometry(0.52, 28, 22), M.skin, 0, HEAD_Y, 0);
+      const earGeo = new THREE.SphereGeometry(0.1, 12, 10);
+      const earL = mesh(earGeo, M.skin, -0.52, HEAD_Y - 0.04, 0.02);
+      const earR = mesh(earGeo, M.skin, 0.52, HEAD_Y - 0.04, 0.02);
+      // Rambut: bahagian atas + belakang kepala (muka tetap terbuka)
+      const hairTop = mesh(new THREE.SphereGeometry(0.55, 28, 12, 0, Math.PI * 2, 0, Math.PI * 0.36), M.hair, 0, HEAD_Y, 0);
+      const hairBack = mesh(new THREE.SphereGeometry(0.545, 28, 16, 0, Math.PI, 0, Math.PI * 0.62), M.hair, 0, HEAD_Y, 0);
+      // Jambul rambut runcing ke belakang
+      const spikeGeo = new THREE.ConeGeometry(0.11, 0.34, 10);
+      const spikes = [[-0.2, 0.15, 0.25], [0, 0.2, 0], [0.2, 0.15, -0.25], [0, 0.05, 0.0]].map(([x, z, rz], i) => {
+        const s = mesh(spikeGeo, M.hair, x, HEAD_Y + 0.5 - (i === 3 ? 0.1 : 0), z + (i === 3 ? 0.3 : 0));
+        s.rotation.x = i === 3 ? 1.5 : 0.9;
+        s.rotation.z = rz;
+        return s;
+      });
+      // Topeng mata hijau (jalur di sekeliling kepala) + mata
+      const mask = mesh(new THREE.CylinderGeometry(0.535, 0.535, 0.15, 32, 1, true), M.mask, 0, HEAD_Y - 0.02, 0);
+      const eyeGeo = new THREE.SphereGeometry(0.1, 14, 12);
+      const pupilGeo = new THREE.SphereGeometry(0.05, 10, 8);
+      const eyes = [-0.19, 0.19].flatMap(x => {
+        const e = mesh(eyeGeo, M.eye, x, HEAD_Y - 0.02, -0.5);
+        e.scale.set(1, 1.2, 0.5);
+        const p = mesh(pupilGeo, M.pupil, x, HEAD_Y - 0.02, -0.55);
+        return [e, p];
+      });
+      // Tali topeng yang berkibar di belakang kepala
+      const tails = new THREE.Group();
+      tails.position.set(0, HEAD_Y - 0.02, 0.52);
+      const tailGeo = capsule(0.035, 0.32);
+      [-0.07, 0.07].forEach((x, i) => {
+        const tl = mesh(tailGeo, M.mask, x, -0.2, 0);
+        tl.rotation.z = i ? -0.25 : 0.25;
+        tails.add(tl);
+      });
+
+      body.add(torso, belt, shorts, neck, head, earL, earR, hairTop, hairBack, mask, tails, ...spikes, ...eyes);
+
+      // Tangan dengan sendi bahu & siku
+      function makeArm(side) {
+        const shoulder = new THREE.Group();
+        shoulder.position.set(side * 0.46, 1.58, 0);
+        shoulder.add(mesh(capsule(0.11, 0.26), M.suit, 0, -0.2, 0));
+        const elbow = new THREE.Group();
+        elbow.position.y = -0.38;
+        elbow.add(mesh(capsule(0.1, 0.2), M.suit, 0, -0.16, 0));
+        elbow.add(mesh(new THREE.SphereGeometry(0.14, 16, 12), M.white, 0, -0.36, 0));   // sarung tangan
+        shoulder.add(elbow);
+        body.add(shoulder);
+        return { shoulder, elbow };
       }
-      const handGeo = new THREE.SphereGeometry(0.11, 10, 8);
-      const handL = new THREE.Mesh(handGeo, M.skin); handL.position.y = -0.8;
-      const handR = new THREE.Mesh(handGeo, M.skin); handR.position.y = -0.8;
-      const shoeGeo = new THREE.BoxGeometry(0.3, 0.18, 0.45);
-      const shoeL = new THREE.Mesh(shoeGeo, M.shoe); shoeL.position.set(0, -0.95, -0.07);
-      const shoeR = new THREE.Mesh(shoeGeo, M.shoe); shoeR.position.set(0, -0.95, -0.07);
+      // Kaki dengan sendi pinggul & lutut, but putih
+      function makeLeg(side) {
+        const hip = new THREE.Group();
+        hip.position.set(side * 0.17, 0.82, 0);
+        hip.add(mesh(capsule(0.13, 0.2), M.suit, 0, -0.17, 0));
+        const knee = new THREE.Group();
+        knee.position.y = -0.38;
+        knee.add(mesh(capsule(0.12, 0.16), M.white, 0, -0.14, 0));
+        const foot = mesh(new THREE.SphereGeometry(0.15, 16, 12), M.white, 0, -0.34, -0.07);
+        foot.scale.set(0.95, 0.7, 1.45);
+        knee.add(foot);
+        hip.add(knee);
+        body.add(hip);
+        return { hip, knee };
+      }
+      const armL = makeArm(-1), armR = makeArm(1);
+      const legL = makeLeg(-1), legR = makeLeg(1);
 
-      const armL = limb(-0.49, 1.78, 0.72, 0.2, M.hoodie, handL);
-      const armR = limb(0.49, 1.78, 0.72, 0.2, M.hoodie, handR);
-      const legL = limb(-0.2, 1.05, 0.9, 0.26, M.jeans, shoeL);
-      const legR = limb(0.2, 1.05, 0.9, 0.26, M.jeans, shoeR);
+      // Jubah (cape) berkibar: satah lembut yang dibengkokkan setiap bingkai
+      const capeTex = canvasTex(makeCapeTexture());
+      const capeGeo = new THREE.PlaneGeometry(1, CAPE_H, 6, 10);
+      capeGeo.translate(0, -CAPE_H / 2, 0);   // bahagian atas jubah di titik ikatan
+      const capeBase = Float32Array.from(capeGeo.attributes.position.array);
+      const cape = new THREE.Mesh(capeGeo, new THREE.MeshToonMaterial({ map: capeTex, side: THREE.DoubleSide }));
+      cape.position.set(0, 1.66, 0.3);
+      body.add(cape);
+      // Kolar jubah di bahu
+      const collar = mesh(new THREE.TorusGeometry(0.3, 0.05, 8, 20, Math.PI), M.belt, 0, 1.64, 0.05);
+      collar.rotation.x = Math.PI / 2;
+      body.add(collar);
 
       scene.add(root);
-      return { root, body, armL, armR, legL, legR };
+      return { root, body, armL, armR, legL, legR, tails, capeGeo, capeBase };
     }
     const runner = buildRunner();
+
+    function updateCape(t, flow) {
+      const pos = runner.capeGeo.attributes.position;
+      const base = runner.capeBase;
+      for (let i = 0; i < pos.count; i++) {
+        const bx = base[i * 3], by = base[i * 3 + 1];
+        const tt = -by / CAPE_H;   // 0 = atas, 1 = hujung bawah
+        const d = tt * CAPE_H;
+        const ang = 0.18 + flow * 0.6 + flow * 0.3 * tt
+          + Math.sin(t * 9 - tt * 4 + bx * 2) * 0.13 * flow * tt
+          + Math.sin(t * 1.8 + bx) * 0.03;
+        pos.setXYZ(i, bx * (0.75 + 0.3 * tt), -d * Math.cos(ang), d * Math.sin(ang));
+      }
+      pos.needsUpdate = true;
+      runner.capeGeo.computeVertexNormals();
+    }
 
     const shadowBlob = new THREE.Mesh(
       new THREE.CircleGeometry(0.6, 24),
@@ -1020,6 +1202,7 @@
     shadowBlob.position.y = 0.2;
     scene.add(shadowBlob);
 
+    let runAmt = 0;
     function updateRunner(dt, t) {
       const targetX = LANES[currentLane];
       player.x += (targetX - player.x) * Math.min(1, dt * 14);
@@ -1030,38 +1213,59 @@
       if (player.inv > 0) player.inv -= dt;
 
       const grounded = player.y <= 0.001;
-      player.phase += dt * (4 + speed * 0.45);
+      // runAmt: 0 = berdiri, 1 = lari laju (ikut kelajuan dunia)
+      runAmt += (Math.min(1, speed / 9) - runAmt) * Math.min(1, dt * 6);
+      player.phase += dt * speed * 0.62;
 
-      runner.root.position.set(player.x, player.y, 0);
-      runner.root.rotation.z = (player.x - targetX) * 0.12;   // condong bila tukar lorong
-      runner.root.visible = player.inv > 0 ? Math.floor(t * 14) % 2 === 0 : true;
+      const R = runner;
+      R.root.position.set(player.x, player.y, 0);
+      R.root.rotation.z = (player.x - targetX) * 0.12;   // condong bila tukar lorong
+      R.root.visible = player.inv > 0 ? Math.floor(t * 14) % 2 === 0 : true;
 
-      const b = runner.body;
-      b.rotation.x = -0.12;
+      const k = Math.min(1, dt * 16);
+      const ease = (o, axis, target) => { o.rotation[axis] += (target - o.rotation[axis]) * k; };
+      const b = R.body;
+
       if (player.roll > 0) {
-        b.scale.y += (0.55 - b.scale.y) * Math.min(1, dt * 20);
-        runner.legL.rotation.x = 1.2; runner.legR.rotation.x = 1.0;
-        runner.armL.rotation.x = 1.0; runner.armR.rotation.x = 1.0;
+        // Guling: badan mengecut & bergulung
+        b.scale.y += (0.6 - b.scale.y) * Math.min(1, dt * 20);
+        ease(b, 'x', -0.4);
+        ease(R.legL.hip, 'x', 1.3); ease(R.legR.hip, 'x', 1.3);
+        ease(R.legL.knee, 'x', -1.6); ease(R.legR.knee, 'x', -1.6);
+        ease(R.armL.shoulder, 'x', 0.9); ease(R.armR.shoulder, 'x', 0.9);
+        ease(R.armL.elbow, 'x', 1.2); ease(R.armR.elbow, 'x', 1.2);
+        b.position.y = 0;
+      } else if (!grounded) {
+        // Di udara: gaya superhero terbang, sebelah tangan ke atas
+        b.scale.y += (1 - b.scale.y) * Math.min(1, dt * 14);
+        ease(b, 'x', -0.1);
+        ease(R.legL.hip, 'x', 0.7); ease(R.legR.hip, 'x', -0.3);
+        ease(R.legL.knee, 'x', -1.2); ease(R.legR.knee, 'x', -0.8);
+        ease(R.armR.shoulder, 'x', 3.0); ease(R.armR.elbow, 'x', 0.1);
+        ease(R.armL.shoulder, 'x', -0.4); ease(R.armL.elbow, 'x', 0.4);
         b.position.y = 0;
       } else {
+        // Di tanah: lari (runAmt tinggi) atau berdiri bernafas (runAmt rendah)
         b.scale.y += (1 - b.scale.y) * Math.min(1, dt * 14);
-        if (grounded) {
-          const s = Math.sin(player.phase);
-          runner.legL.rotation.x = s * 0.95;
-          runner.legR.rotation.x = -s * 0.95;
-          runner.armL.rotation.x = -s * 0.9;
-          runner.armR.rotation.x = s * 0.9;
-          b.position.y = Math.abs(Math.cos(player.phase)) * 0.1;
-        } else {
-          runner.legL.rotation.x = 0.9;
-          runner.legR.rotation.x = -0.35;
-          runner.armL.rotation.x = 2.6;
-          runner.armR.rotation.x = 2.3;
-          b.position.y = 0;
-        }
+        const s = Math.sin(player.phase), c = Math.cos(player.phase);
+        ease(b, 'x', -0.18 * runAmt);
+        ease(R.legL.hip, 'x', s * 0.85 * runAmt);
+        ease(R.legR.hip, 'x', -s * 0.85 * runAmt);
+        ease(R.legL.knee, 'x', -Math.max(0, c) * 1.3 * runAmt - 0.05);
+        ease(R.legR.knee, 'x', -Math.max(0, -c) * 1.3 * runAmt - 0.05);
+        ease(R.armL.shoulder, 'x', -s * 0.8 * runAmt);
+        ease(R.armR.shoulder, 'x', s * 0.8 * runAmt);
+        ease(R.armL.elbow, 'x', 0.25 + 1.1 * runAmt);
+        ease(R.armR.elbow, 'x', 0.25 + 1.1 * runAmt);
+        b.position.y = Math.abs(c) * 0.1 * runAmt + (1 - runAmt) * Math.sin(t * 2.2) * 0.012;
       }
-      runner.armL.rotation.z = -0.1;
-      runner.armR.rotation.z = 0.1;
+      R.armL.shoulder.rotation.z = -0.15;
+      R.armR.shoulder.rotation.z = 0.15;
+
+      // Tali topeng & jubah berkibar ikut kelajuan
+      const flow = grounded ? runAmt : Math.max(runAmt, 0.8);
+      R.tails.rotation.x = -(0.25 + 0.9 * flow) + Math.sin(t * 14) * 0.12 * flow + Math.sin(t * 2) * 0.04;
+      updateCape(t, flow);
 
       shadowBlob.position.x = player.x;
       const sc = Math.max(0.45, 1 - player.y * 0.18);
@@ -1102,6 +1306,11 @@
       else if (k === 'ArrowRight' || k === 'd' || k === 'D') { setPlayerLane(currentLane + 1); e.preventDefault(); }
       else if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === ' ') { doJump(); e.preventDefault(); }
       else if (k === 'ArrowDown' || k === 's' || k === 'S') { doRoll(); e.preventDefault(); }
+      else if (k === 'f' || k === 'F' || k === 'j' || k === 'J') {
+        // Ujian tanpa kamera: tekan F dan J berselang-seli = melangkah
+        if (!keyboardSteps) { keyboardSteps = true; updateStepModeBtn(); }
+        registerStep();
+      }
     });
 
     // Swipe / ketik untuk skrin sentuh
@@ -1141,6 +1350,43 @@
     function toggleCamPanel() {
       const hidden = camPanelEl.classList.toggle('hidden');
       document.getElementById('btn-cam-view').textContent = hidden ? "Tunjuk Kamera" : "Sorok Kamera";
+    }
+
+    // ---------- Mod larian: Ikut Langkah / Auto ----------
+    function stepControlOn() {
+      return stepMode && (cameraReady || keyboardSteps);
+    }
+
+    function updateStepModeBtn() {
+      if (!cameraReady && !keyboardSteps) stepModeBtn.textContent = "Larian: Auto (tiada kamera)";
+      else stepModeBtn.textContent = stepMode ? "Larian: Ikut Langkah" : "Larian: Auto";
+      stepModeBtn.classList.toggle('active-mode', stepControlOn());
+    }
+
+    function toggleStepMode() {
+      stepMode = !stepMode;
+      if (!isRunning) effort = 1;
+      updateStepModeBtn();
+    }
+
+    function registerStep() {
+      const now = performance.now();
+      if (now - lastStepTime < 150) return;   // tapis gegaran / bacaan berganda
+      lastStepTime = now;
+      stepTimes.push(now);
+      if (isRunning) {
+        totalSteps++;
+        stepsValEl.textContent = totalSteps;
+      }
+    }
+
+    // Sasaran tenaga (0 hingga 1) berdasarkan kadar langkah 2 saat terakhir
+    function effortTarget(now) {
+      if (!stepControlOn()) return 1;
+      while (stepTimes.length && now - stepTimes[0] > 2000) stepTimes.shift();
+      if (now - lastStepTime > STOP_AFTER_MS) return 0;
+      const cadence = stepTimes.length / 2;   // langkah sesaat
+      return Math.min(1, cadence / TARGET_CADENCE);
     }
 
     // =====================================================================
@@ -1237,6 +1483,14 @@
       setPlayerLane(1);
       player.x = 0; player.y = 0; player.vy = 0; player.roll = 0; player.inv = 0;
 
+      // Mod langkah: Wira mula berdiri, kena melangkah dulu baru lari
+      usedStepMode = stepControlOn();
+      effort = usedStepMode ? 0 : 1;
+      stepTimes = [];
+      lastStepTime = 0;
+      totalSteps = 0;
+      stepsValEl.textContent = '0';
+
       startModalEl.style.display = 'none';
       endModalEl.style.display = 'none';
       reportModalEl.style.display = 'none';
@@ -1253,6 +1507,8 @@
       if (!isRunning) return;
       isRunning = false;
       playSound('win');
+      walkPromptEl.classList.remove('show');
+      const stepNote = usedStepMode ? ` Anda telah melangkah sebanyak ${totalSteps} langkah!` : '';
 
       const titleEl = document.getElementById('end-title');
       const msgEl = document.getElementById('final-message');
@@ -1261,11 +1517,11 @@
       if (survivedFullTime) {
         titleEl.textContent = "Tahniah! Misi 60 Saat Berjaya!";
         titleEl.style.color = "#facc15";
-        msgEl.textContent = `Hebat! Anda kutip ${healthyCount} buah & sayur dan tamat dengan baki ${lives} nyawa!`;
+        msgEl.textContent = `Hebat! Anda kutip ${healthyCount} buah & sayur dan tamat dengan baki ${lives} nyawa!${stepNote}`;
       } else {
         titleEl.textContent = "Nyawa Habis! Cuba Lagi!";
         titleEl.style.color = "#f43f5e";
-        msgEl.textContent = `Anda kutip ${healthyCount} buah & sayur. Ingat, makanan tinggi gula dan ultra-proses perlu dielakkan. Jom cuba lagi!`;
+        msgEl.textContent = `Anda kutip ${healthyCount} buah & sayur.${stepNote} Ingat, makanan tinggi gula dan ultra-proses perlu dielakkan. Jom cuba lagi!`;
       }
 
       endModalEl.style.display = 'flex';
@@ -1395,10 +1651,17 @@
         timeLeft -= dt;
         const sec = Math.max(0, Math.ceil(timeLeft));
         if (sec !== lastShownSecond) { lastShownSecond = sec; timerValEl.textContent = `${sec}s`; }
-        speed = 13 + (60 - timeLeft) * 0.16;   // makin laju (13 → ~22)
+        // Tenaga ikut kadar langkah pemain (mod langkah) atau sentiasa penuh (mod auto)
+        const target = effortTarget(now);
+        effort += (target - effort) * Math.min(1, dt * (target > effort ? 4 : 2.5));
+        if (target === 0 && effort < 0.03) effort = 0;
+        speed = (13 + (60 - timeLeft) * 0.16) * effort;   // makin laju (13 → ~22) × tenaga
+        effortBarEl.style.width = `${Math.round(effort * 100)}%`;
+        walkPromptEl.classList.toggle('show', usedStepMode && stepControlOn() && target === 0);
         if (timeLeft <= 0) { timeLeft = 0; endGame(true); }
       } else {
         speed = IDLE_SPEED;
+        effortBarEl.style.width = '0%';
       }
 
       const move = speed * dt;
@@ -1410,12 +1673,38 @@
     }
 
     // =====================================================================
-    // 10. KAWALAN KAMERA MEDIAPIPE (LORONG + LOMPAT/CANGKUNG)
+    // 10. KAWALAN KAMERA MEDIAPIPE (LORONG + LOMPAT/CANGKUNG + LANGKAH)
     // =====================================================================
     const videoElement = document.getElementById('webcam-video');
     const camStatusEl = document.getElementById('cam-status');
     let poseBaseline = null;
     let lastGestureTime = 0;
+
+    // ---------- Pengesan langkah jalan setempat ----------
+    // Bila jalan setempat, lutut kiri & kanan naik berselang-seli. Kita ukur beza
+    // ketinggian lutut kiri vs kanan (dibahagi panjang badan supaya jarak dari kamera
+    // tak beri kesan). Setiap kali beza itu bertukar arah melepasi ambang = 1 langkah.
+    let stepSide = 0;   // +1 = lutut kiri lebih tinggi kali terakhir, -1 = kanan
+    function detectStep(lm) {
+      const vis = p => p && (p.visibility ?? 1) > 0.5;
+      const ls = lm[11], rs = lm[12], lh = lm[23], rh = lm[24];
+      if (!vis(ls) || !vis(rs)) return;
+      let scale;
+      if (vis(lh) && vis(rh)) scale = Math.abs((lh.y + rh.y) / 2 - (ls.y + rs.y) / 2);   // bahu ke pinggul
+      else scale = Math.abs(ls.x - rs.x) * 1.3;                                          // anggaran dari lebar bahu
+      if (scale < 0.05) return;
+
+      let a, b, th;
+      if (vis(lm[25]) && vis(lm[26])) { a = lm[25]; b = lm[26]; th = 0.08; }        // lutut (terbaik)
+      else if (vis(lm[27]) && vis(lm[28])) { a = lm[27]; b = lm[28]; th = 0.08; }   // buku lali
+      else if (vis(lm[15]) && vis(lm[16])) { a = lm[15]; b = lm[16]; th = 0.2; }    // ayunan tangan (sandaran)
+      else return;
+
+      // Nilai y imej bertambah ke bawah: positif = bahagian kanan lebih tinggi
+      const s = (a.y - b.y) / scale;
+      if (s > th && stepSide !== 1) { stepSide = 1; registerStep(); }
+      else if (s < -th && stepSide !== -1) { stepSide = -1; registerStep(); }
+    }
 
     function onPoseResults(results) {
       if (!results.poseLandmarks || results.poseLandmarks.length === 0) {
@@ -1425,6 +1714,7 @@
       const lm = results.poseLandmarks;
       let rawX = null, rawY = null;
       const now = performance.now();
+      detectStep(lm);
 
       if (trackingMode === "BODY") {
         if (lm[0]) {
@@ -1485,11 +1775,14 @@
           height: 480
         });
         await cam.start();
-        camStatusEl.textContent = "Kamera aktif: gerak Kiri/Tengah/Kanan, lompat & cangkung! (Tiada video dirakam)";
+        cameraReady = true;
+        updateStepModeBtn();
+        camStatusEl.textContent = "Kamera aktif: jalan setempat untuk lari, gerak Kiri/Tengah/Kanan, lompat & cangkung! Pastikan badan sampai lutut nampak. (Tiada video dirakam)";
         camStatusEl.style.color = "#facc15";
       } catch (err) {
         console.warn("Kamera tidak dapat diakses, guna sentuhan/kekunci:", err);
-        camStatusEl.textContent = "Mod Kekunci/Sentuhan: ◀ ▶ tukar lorong, ▲ lompat, ▼ guling (atau swipe).";
+        camStatusEl.textContent = "Mod Kekunci/Sentuhan: ◀ ▶ tukar lorong, ▲ lompat, ▼ guling (atau swipe). Wira lari sendiri (tekan F/J berselang-seli untuk uji mod langkah).";
+        updateStepModeBtn();
         camPanelEl.classList.add('hidden');
         document.getElementById('btn-cam-view').textContent = "Tunjuk Kamera";
       }
@@ -1516,7 +1809,8 @@
         markah: finalScore,
         bakiNyawa: remainingLives,
         status: statusText,
-        modKawalan: activeControlUsed
+        modKawalan: activeControlUsed + (usedStepMode ? " + Jalan Setempat" : ""),
+        langkah: usedStepMode ? totalSteps : "-"
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
       updateReportButtonUI();
@@ -1536,11 +1830,16 @@
         const total = existing.length;
         const avg = (existing.reduce((a, r) => a + Number(r.markah), 0) / total).toFixed(1);
         const survivedCount = existing.filter(r => r.status === "Selesai 60s").length;
+        const stepRecs = existing.filter(r => typeof r.langkah === 'number');
+        const avgSteps = stepRecs.length
+          ? (stepRecs.reduce((a, r) => a + r.langkah, 0) / stepRecs.length).toFixed(0)
+          : '-';
         box.innerHTML = `
           <div><strong>Modul:</strong> Larian Wira Sihat (3 Lorong)</div>
           <div><strong>Jumlah Pemain:</strong> ${total} orang</div>
           <div><strong>Purata Markah:</strong> ${avg} markah</div>
           <div><strong>Berjaya Bertahan 60 Saat:</strong> ${survivedCount} orang</div>
+          <div><strong>Purata Langkah (mod jalan setempat):</strong> ${avgSteps}</div>
         `;
       }
       reportModalEl.style.display = 'flex';
@@ -1551,9 +1850,9 @@
     function downloadCSVReport() {
       const existing = getRecords();
       if (existing.length === 0) { alert("Tiada data pemain untuk dimuat turun."); return; }
-      let csv = "Bil,Tarikh dan Masa,Markah,Baki Nyawa,Status Tamat,Mod Kawalan\n";
+      let csv = "Bil,Tarikh dan Masa,Markah,Baki Nyawa,Status Tamat,Mod Kawalan,Jumlah Langkah\n";
       existing.forEach(r => {
-        csv += `${r.bil},"${r.tarikhMasa}",${r.markah},${r.bakiNyawa},"${r.status}","${r.modKawalan}"\n`;
+        csv += `${r.bil},"${r.tarikhMasa}",${r.markah},${r.bakiNyawa},"${r.status}","${r.modKawalan}",${r.langkah ?? "-"}\n`;
       });
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -1575,15 +1874,17 @@
 
     // Fungsi untuk butang HTML (onclick) kerana skrip ini ialah module
     Object.assign(window, {
-      startGame, toggleTrackingMode, toggleCamPanel,
+      startGame, toggleTrackingMode, toggleCamPanel, toggleStepMode,
       openReportModal, closeReportModal, downloadCSVReport, clearLocalRecords
     });
 
     // Mulakan enjin
     window.__gameReady = true;
     updateReportButtonUI();
+    updateStepModeBtn();
     requestAnimationFrame(gameLoop);
     initCamera();
   </script>
 </body>
 </html>
+                
