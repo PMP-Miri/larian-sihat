@@ -275,50 +275,6 @@
     }
     #load-warning { display: none; color: #fda4af; font-size: 0.85rem; margin-top: 10px; }
 
-    /* Bar tenaga langkah (dalam paparan kamera) */
-    #effort-wrap {
-      position: absolute;
-      top: 24px; left: 6px; right: 6px;
-      height: 9px;
-      background: rgba(15,23,42,0.75);
-      border-radius: 6px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.4);
-    }
-    #effort-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #22c55e, #facc15);
-      transition: width 0.15s linear;
-    }
-
-    /* Mesej "jalan setempat" bila watak berhenti */
-    #walk-prompt {
-      position: fixed;
-      left: 50%;
-      top: 40%;
-      transform: translate(-50%, -50%);
-      z-index: 70;
-      background: rgba(15,23,42,0.88);
-      border: 3px solid var(--gold);
-      color: #fff;
-      padding: 14px 26px;
-      border-radius: 18px;
-      font-weight: 900;
-      font-size: 1.35rem;
-      text-align: center;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.25s;
-      max-width: 90vw;
-    }
-    #walk-prompt small { display: block; font-size: 0.8rem; color: #cbd5e1; font-weight: 700; margin-top: 4px; }
-    #walk-prompt.show { opacity: 1; animation: walkPulse 1s ease-in-out infinite; }
-    @keyframes walkPulse {
-      0%, 100% { transform: translate(-50%, -50%) scale(1); }
-      50% { transform: translate(-50%, -50%) scale(1.06); }
-    }
-
     @media (max-width: 700px) {
       .brand-box { display: none; }
       .hud-center { gap: 10px; padding: 5px 10px; }
@@ -357,16 +313,10 @@
         <div class="hud-label">Markah</div>
         <div class="hud-val" id="score-val">0</div>
       </div>
-      <div class="hud-stat">
-        <div class="hud-label">Langkah</div>
-        <div class="hud-val" id="steps-val">0</div>
-      </div>
     </div>
 
     <div class="controls-box">
-      <button class="btn-ctrl active-mode" id="btn-track-mode" onclick="toggleTrackingMode()">Kamera: Ikut Badan</button>
-      <button class="btn-ctrl" id="btn-step-mode" onclick="toggleStepMode()">Larian: Auto (tiada kamera)</button>
-      <button class="btn-ctrl" id="btn-cam-view" onclick="toggleCamPanel()">Sorok Kamera</button>
+      <button class="btn-ctrl active-mode" id="btn-track-mode" onclick="toggleTrackingMode()">Kamera: Ikut Badan</button>      <button class="btn-ctrl" id="btn-cam-view" onclick="toggleCamPanel()">Sorok Kamera</button>
       <button class="btn-ctrl" id="btn-open-report" onclick="openReportModal()">Laporan (0)</button>
       <button class="btn-ctrl" onclick="startGame()">Mula Semula</button>
     </div>
@@ -383,11 +333,7 @@
     <div id="sensor-dot"></div>
     <div class="cam-title">KAMERA</div>
     <div id="gesture-tag">LOMPAT!</div>
-    <div id="effort-wrap"><div id="effort-bar"></div></div>
   </div>
-
-  <!-- Mesej bila watak berhenti (pemain tak melangkah) -->
-  <div id="walk-prompt">🚶 Jalan pantas setempat untuk lari!<small>Angkat lutut kiri, kanan, kiri, kanan... (masa tetap berjalan)</small></div>
 
   <!-- Modal Mula -->
   <div class="modal-overlay" id="start-modal">
@@ -395,12 +341,11 @@
       <div class="modal-title">Misi Larian Wira Sihat!</div>
       <p style="color: #cbd5e1; font-size: 0.95rem;">Lari di landasan kereta api, kutip makanan sihat!</p>
       <div class="guide-list">
-        <div style="color: #facc15;"><strong>1. Jalan pantas setempat</strong> (angkat lutut kiri-kanan di tempat yang sama) supaya Wira berlari. <strong>Berdiri diam = Wira berhenti</strong>, tapi masa tetap berjalan!</div>
-        <div style="margin-top: 6px;"><strong>2. Tukar lorong:</strong> Gerak badan ke <strong>Kiri / Tengah / Kanan</strong> depan kamera (atau anak panah ◀ ▶ / swipe).</div>
-        <div style="margin-top: 6px;"><strong>3. Lompat:</strong> Lompat depan kamera (atau ▲ / Space / swipe atas). <strong>Guling:</strong> Cangkung (atau ▼ / swipe bawah).</div>
-        <div style="margin-top: 6px; color: #34d399;"><strong>4. Kutip buah & sayur</strong> (label hijau): <strong>+10 Markah</strong>.</div>
-        <div style="margin-top: 6px; color: #fb7185;"><strong>5. Elak makanan tak sihat</strong> (label merah) & <strong>kereta api</strong>: <strong>-1 Nyawa</strong>.</div>
-        <div style="margin-top: 6px; color: #94a3b8; font-size: 0.85rem;">Tip: berdiri 2 hingga 3 meter dari kamera supaya badan sampai ke lutut nampak dalam skrin kamera.</div>
+        <div><strong>1. Tukar lorong:</strong> Gerak badan ke <strong>Kiri / Tengah / Kanan</strong> depan kamera (atau anak panah ◀ ▶ / swipe).</div>
+        <div style="margin-top: 6px;"><strong>2. Lompat:</strong> Lompat depan kamera (atau ▲ / Space / swipe atas). <strong>Guling:</strong> Cangkung (atau ▼ / swipe bawah).</div>
+        <div style="margin-top: 6px; color: #34d399;"><strong>3. Kutip buah & sayur</strong> (label hijau): <strong>+10 Markah</strong>.</div>
+        <div style="margin-top: 6px; color: #fb7185;"><strong>4. Elak makanan tak sihat</strong> (label merah) & <strong>kereta api</strong>: <strong>-1 Nyawa</strong>. Lompat untuk melepasi makanan tak sihat!</div>
+        <div style="margin-top: 6px; color: #94a3b8; font-size: 0.85rem;">Tip: pastikan kepala dan bahu nampak jelas dalam paparan kamera supaya lompat & cangkung mudah dikesan.</div>
       </div>
       <button class="btn-primary" onclick="startGame()">Mula Larian Sekarang!</button>
       <div id="load-warning">Enjin 3D gagal dimuatkan. Pastikan peranti disambung ke internet, kemudian muat semula halaman.</div>
@@ -526,18 +471,6 @@
     let speed = IDLE_SPEED, distSinceSpawn = 0, shake = 0;
     let lastShownSecond = 60;
 
-    // Kawalan langkah (jalan pantas / jogging setempat)
-    const TARGET_CADENCE = 1.5;   // langkah sesaat untuk laju penuh (jalan pantas setempat)
-    const STOP_AFTER_MS = 1100;   // tiada langkah selama ini = Wira berhenti
-    let cameraReady = false;      // kamera & MediaPipe berjaya dimulakan
-    let keyboardSteps = false;    // ujian tanpa kamera: kekunci F / J sebagai langkah
-    let stepMode = true;          // true = perlu melangkah untuk lari, false = auto lari
-    let usedStepMode = false;     // mod yang digunakan dalam pusingan semasa (untuk rekod)
-    let effort = 1;               // 0 = berhenti, 1 = laju penuh
-    let stepTimes = [];
-    let lastStepTime = 0;
-    let totalSteps = 0;
-
     const player = { x: 0, y: 0, vy: 0, roll: 0, inv: 0, phase: 0 };
     let items = [];
     let trains = [];
@@ -553,11 +486,6 @@
     const sensorDotEl = document.getElementById('sensor-dot');
     const gestureTagEl = document.getElementById('gesture-tag');
     const zoneLabels = document.querySelectorAll('.cam-zone-label');
-    const stepsValEl = document.getElementById('steps-val');
-    const effortBarEl = document.getElementById('effort-bar');
-    const walkPromptEl = document.getElementById('walk-prompt');
-    const stepModeBtn = document.getElementById('btn-step-mode');
-
     // =====================================================================
     // 4. PENYEDIAAN DUNIA 3D
     // =====================================================================
@@ -995,9 +923,13 @@
       return new THREE.SpriteMaterial({ map: canvasTex(c), transparent: true, depthWrite: false });
     }
 
+    // Saiz makanan (1.725 = 1.5x saiz asal 1.15) supaya jelas dari jauh
+    const FOOD_SCALE = 1.725;
+    const JUNK_Y = 1.05;    // ketinggian makanan tak sihat (dinaikkan sikit supaya tak tenggelam dalam landasan)
+
     ITEMS_CATALOG.forEach(it => {
       it.proto = FOOD_BUILDERS[it.model]();
-      it.proto.scale.setScalar(1.15);
+      it.proto.scale.setScalar(FOOD_SCALE);
       it.tagMat = makeTagMaterial(it);
     });
     const HEALTHY_POOL = ITEMS_CATALOG.filter(i => i.isHealthy);
@@ -1011,8 +943,8 @@
       model.rotation.y = Math.random() * Math.PI * 2;
       obj.add(model);
       const tag = new THREE.Sprite(tpl.tagMat);
-      tag.scale.set(1.25, 0.31, 1);
-      tag.position.y = 1.0;
+      tag.scale.set(1.7, 0.42, 1);
+      tag.position.y = 1.75;   // label di atas makanan yang lebih besar
       obj.add(tag);
       obj.position.set(LANES[lane], y, z);
       scene.add(obj);
@@ -1306,11 +1238,6 @@
       else if (k === 'ArrowRight' || k === 'd' || k === 'D') { setPlayerLane(currentLane + 1); e.preventDefault(); }
       else if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === ' ') { doJump(); e.preventDefault(); }
       else if (k === 'ArrowDown' || k === 's' || k === 'S') { doRoll(); e.preventDefault(); }
-      else if (k === 'f' || k === 'F' || k === 'j' || k === 'J') {
-        // Ujian tanpa kamera: tekan F dan J berselang-seli = melangkah
-        if (!keyboardSteps) { keyboardSteps = true; updateStepModeBtn(); }
-        registerStep();
-      }
     });
 
     // Swipe / ketik untuk skrin sentuh
@@ -1352,43 +1279,6 @@
       document.getElementById('btn-cam-view').textContent = hidden ? "Tunjuk Kamera" : "Sorok Kamera";
     }
 
-    // ---------- Mod larian: Ikut Langkah / Auto ----------
-    function stepControlOn() {
-      return stepMode && (cameraReady || keyboardSteps);
-    }
-
-    function updateStepModeBtn() {
-      if (!cameraReady && !keyboardSteps) stepModeBtn.textContent = "Larian: Auto (tiada kamera)";
-      else stepModeBtn.textContent = stepMode ? "Larian: Ikut Langkah" : "Larian: Auto";
-      stepModeBtn.classList.toggle('active-mode', stepControlOn());
-    }
-
-    function toggleStepMode() {
-      stepMode = !stepMode;
-      if (!isRunning) effort = 1;
-      updateStepModeBtn();
-    }
-
-    function registerStep() {
-      const now = performance.now();
-      if (now - lastStepTime < 150) return;   // tapis gegaran / bacaan berganda
-      lastStepTime = now;
-      stepTimes.push(now);
-      if (isRunning) {
-        totalSteps++;
-        stepsValEl.textContent = totalSteps;
-      }
-    }
-
-    // Sasaran tenaga (0 hingga 1) berdasarkan kadar langkah 2 saat terakhir
-    function effortTarget(now) {
-      if (!stepControlOn()) return 1;
-      while (stepTimes.length && now - stepTimes[0] > 2000) stepTimes.shift();
-      if (now - lastStepTime > STOP_AFTER_MS) return 0;
-      const cadence = stepTimes.length / 2;   // langkah sesaat
-      return Math.min(1, cadence / TARGET_CADENCE);
-    }
-
     // =====================================================================
     // 7. CORAK HALANGAN & MAKANAN
     // =====================================================================
@@ -1412,17 +1302,17 @@
         // Barisan buah/sayur (macam barisan syiling)
         const L = randLane();
         healthyLine(L, z0, 5);
-        if (Math.random() < 0.5 + elapsed / 120) spawnItem(false, pick(otherLanes(L)), z0 - 6, 0.95);
+        if (Math.random() < 0.5 + elapsed / 120) spawnItem(false, pick(otherLanes(L)), z0 - 6, JUNK_Y);
       } else if (r < 0.52) {
         // Makanan tak sihat di bawah, lengkung makanan sihat di atas: perlu LOMPAT
         const L = randLane();
-        spawnItem(false, L, z0 - 6, 0.95);
+        spawnItem(false, L, z0 - 6, JUNK_Y);
         healthyArc(L, z0 - 6);
         if (Math.random() < 0.5) healthyLine(pick(otherLanes(L)), z0 - 3, 3);
       } else if (r < 0.76) {
         // Dua lorong makanan tak sihat, satu lorong selamat
         const free = randLane();
-        otherLanes(free).forEach(l => spawnItem(false, l, z0 - 4, 0.95));
+        otherLanes(free).forEach(l => spawnItem(false, l, z0 - 4, JUNK_Y));
         healthyLine(free, z0 - 1, 3);
       } else {
         // Kereta api: kena tukar lorong
@@ -1483,14 +1373,6 @@
       setPlayerLane(1);
       player.x = 0; player.y = 0; player.vy = 0; player.roll = 0; player.inv = 0;
 
-      // Mod langkah: Wira mula berdiri, kena melangkah dulu baru lari
-      usedStepMode = stepControlOn();
-      effort = usedStepMode ? 0 : 1;
-      stepTimes = [];
-      lastStepTime = 0;
-      totalSteps = 0;
-      stepsValEl.textContent = '0';
-
       startModalEl.style.display = 'none';
       endModalEl.style.display = 'none';
       reportModalEl.style.display = 'none';
@@ -1507,8 +1389,6 @@
       if (!isRunning) return;
       isRunning = false;
       playSound('win');
-      walkPromptEl.classList.remove('show');
-      const stepNote = usedStepMode ? ` Anda telah melangkah sebanyak ${totalSteps} langkah!` : '';
 
       const titleEl = document.getElementById('end-title');
       const msgEl = document.getElementById('final-message');
@@ -1517,11 +1397,11 @@
       if (survivedFullTime) {
         titleEl.textContent = "Tahniah! Misi 60 Saat Berjaya!";
         titleEl.style.color = "#facc15";
-        msgEl.textContent = `Hebat! Anda kutip ${healthyCount} buah & sayur dan tamat dengan baki ${lives} nyawa!${stepNote}`;
+        msgEl.textContent = `Hebat! Anda kutip ${healthyCount} buah & sayur dan tamat dengan baki ${lives} nyawa!`;
       } else {
         titleEl.textContent = "Nyawa Habis! Cuba Lagi!";
         titleEl.style.color = "#f43f5e";
-        msgEl.textContent = `Anda kutip ${healthyCount} buah & sayur.${stepNote} Ingat, makanan tinggi gula dan ultra-proses perlu dielakkan. Jom cuba lagi!`;
+        msgEl.textContent = `Anda kutip ${healthyCount} buah & sayur. Ingat, makanan tinggi gula dan ultra-proses perlu dielakkan. Jom cuba lagi!`;
       }
 
       endModalEl.style.display = 'flex';
@@ -1651,17 +1531,10 @@
         timeLeft -= dt;
         const sec = Math.max(0, Math.ceil(timeLeft));
         if (sec !== lastShownSecond) { lastShownSecond = sec; timerValEl.textContent = `${sec}s`; }
-        // Tenaga ikut kadar langkah pemain (mod langkah) atau sentiasa penuh (mod auto)
-        const target = effortTarget(now);
-        effort += (target - effort) * Math.min(1, dt * (target > effort ? 4 : 2.5));
-        if (target === 0 && effort < 0.03) effort = 0;
-        speed = (13 + (60 - timeLeft) * 0.16) * effort;   // makin laju (13 → ~22) × tenaga
-        effortBarEl.style.width = `${Math.round(effort * 100)}%`;
-        walkPromptEl.classList.toggle('show', usedStepMode && stepControlOn() && target === 0);
+        speed = 13 + (60 - timeLeft) * 0.16;   // Wira lari sendiri, makin laju (13 → ~22)
         if (timeLeft <= 0) { timeLeft = 0; endGame(true); }
       } else {
         speed = IDLE_SPEED;
-        effortBarEl.style.width = '0%';
       }
 
       const move = speed * dt;
@@ -1673,38 +1546,12 @@
     }
 
     // =====================================================================
-    // 10. KAWALAN KAMERA MEDIAPIPE (LORONG + LOMPAT/CANGKUNG + LANGKAH)
+    // 10. KAWALAN KAMERA MEDIAPIPE (LORONG + LOMPAT/CANGKUNG)
     // =====================================================================
     const videoElement = document.getElementById('webcam-video');
     const camStatusEl = document.getElementById('cam-status');
     let poseBaseline = null;
     let lastGestureTime = 0;
-
-    // ---------- Pengesan langkah jalan setempat ----------
-    // Bila jalan setempat, lutut kiri & kanan naik berselang-seli. Kita ukur beza
-    // ketinggian lutut kiri vs kanan (dibahagi panjang badan supaya jarak dari kamera
-    // tak beri kesan). Setiap kali beza itu bertukar arah melepasi ambang = 1 langkah.
-    let stepSide = 0;   // +1 = lutut kiri lebih tinggi kali terakhir, -1 = kanan
-    function detectStep(lm) {
-      const vis = p => p && (p.visibility ?? 1) > 0.5;
-      const ls = lm[11], rs = lm[12], lh = lm[23], rh = lm[24];
-      if (!vis(ls) || !vis(rs)) return;
-      let scale;
-      if (vis(lh) && vis(rh)) scale = Math.abs((lh.y + rh.y) / 2 - (ls.y + rs.y) / 2);   // bahu ke pinggul
-      else scale = Math.abs(ls.x - rs.x) * 1.3;                                          // anggaran dari lebar bahu
-      if (scale < 0.05) return;
-
-      let a, b, th;
-      if (vis(lm[25]) && vis(lm[26])) { a = lm[25]; b = lm[26]; th = 0.08; }        // lutut (terbaik)
-      else if (vis(lm[27]) && vis(lm[28])) { a = lm[27]; b = lm[28]; th = 0.08; }   // buku lali
-      else if (vis(lm[15]) && vis(lm[16])) { a = lm[15]; b = lm[16]; th = 0.2; }    // ayunan tangan (sandaran)
-      else return;
-
-      // Nilai y imej bertambah ke bawah: positif = bahagian kanan lebih tinggi
-      const s = (a.y - b.y) / scale;
-      if (s > th && stepSide !== 1) { stepSide = 1; registerStep(); }
-      else if (s < -th && stepSide !== -1) { stepSide = -1; registerStep(); }
-    }
 
     function onPoseResults(results) {
       if (!results.poseLandmarks || results.poseLandmarks.length === 0) {
@@ -1714,7 +1561,6 @@
       const lm = results.poseLandmarks;
       let rawX = null, rawY = null;
       const now = performance.now();
-      detectStep(lm);
 
       if (trackingMode === "BODY") {
         if (lm[0]) {
@@ -1775,14 +1621,11 @@
           height: 480
         });
         await cam.start();
-        cameraReady = true;
-        updateStepModeBtn();
-        camStatusEl.textContent = "Kamera aktif: jalan setempat untuk lari, gerak Kiri/Tengah/Kanan, lompat & cangkung! Pastikan badan sampai lutut nampak. (Tiada video dirakam)";
+        camStatusEl.textContent = "Kamera aktif: gerak Kiri/Tengah/Kanan, lompat & cangkung! (Tiada video dirakam)";
         camStatusEl.style.color = "#facc15";
       } catch (err) {
         console.warn("Kamera tidak dapat diakses, guna sentuhan/kekunci:", err);
-        camStatusEl.textContent = "Mod Kekunci/Sentuhan: ◀ ▶ tukar lorong, ▲ lompat, ▼ guling (atau swipe). Wira lari sendiri (tekan F/J berselang-seli untuk uji mod langkah).";
-        updateStepModeBtn();
+        camStatusEl.textContent = "Mod Kekunci/Sentuhan: ◀ ▶ tukar lorong, ▲ lompat, ▼ guling (atau swipe).";
         camPanelEl.classList.add('hidden');
         document.getElementById('btn-cam-view').textContent = "Tunjuk Kamera";
       }
@@ -1809,8 +1652,7 @@
         markah: finalScore,
         bakiNyawa: remainingLives,
         status: statusText,
-        modKawalan: activeControlUsed + (usedStepMode ? " + Jalan Setempat" : ""),
-        langkah: usedStepMode ? totalSteps : "-"
+        modKawalan: activeControlUsed
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
       updateReportButtonUI();
@@ -1830,17 +1672,11 @@
         const total = existing.length;
         const avg = (existing.reduce((a, r) => a + Number(r.markah), 0) / total).toFixed(1);
         const survivedCount = existing.filter(r => r.status === "Selesai 60s").length;
-        const stepRecs = existing.filter(r => typeof r.langkah === 'number');
-        const avgSteps = stepRecs.length
-          ? (stepRecs.reduce((a, r) => a + r.langkah, 0) / stepRecs.length).toFixed(0)
-          : '-';
         box.innerHTML = `
           <div><strong>Modul:</strong> Larian Wira Sihat (3 Lorong)</div>
           <div><strong>Jumlah Pemain:</strong> ${total} orang</div>
           <div><strong>Purata Markah:</strong> ${avg} markah</div>
-          <div><strong>Berjaya Bertahan 60 Saat:</strong> ${survivedCount} orang</div>
-          <div><strong>Purata Langkah (mod jalan setempat):</strong> ${avgSteps}</div>
-        `;
+          <div><strong>Berjaya Bertahan 60 Saat:</strong> ${survivedCount} orang</div>        `;
       }
       reportModalEl.style.display = 'flex';
     }
@@ -1850,9 +1686,9 @@
     function downloadCSVReport() {
       const existing = getRecords();
       if (existing.length === 0) { alert("Tiada data pemain untuk dimuat turun."); return; }
-      let csv = "Bil,Tarikh dan Masa,Markah,Baki Nyawa,Status Tamat,Mod Kawalan,Jumlah Langkah\n";
+      let csv = "Bil,Tarikh dan Masa,Markah,Baki Nyawa,Status Tamat,Mod Kawalan\n";
       existing.forEach(r => {
-        csv += `${r.bil},"${r.tarikhMasa}",${r.markah},${r.bakiNyawa},"${r.status}","${r.modKawalan}",${r.langkah ?? "-"}\n`;
+        csv += `${r.bil},"${r.tarikhMasa}",${r.markah},${r.bakiNyawa},"${r.status}","${r.modKawalan}"\n`;
       });
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -1874,17 +1710,15 @@
 
     // Fungsi untuk butang HTML (onclick) kerana skrip ini ialah module
     Object.assign(window, {
-      startGame, toggleTrackingMode, toggleCamPanel, toggleStepMode,
+      startGame, toggleTrackingMode, toggleCamPanel,
       openReportModal, closeReportModal, downloadCSVReport, clearLocalRecords
     });
 
     // Mulakan enjin
     window.__gameReady = true;
     updateReportButtonUI();
-    updateStepModeBtn();
     requestAnimationFrame(gameLoop);
     initCamera();
   </script>
 </body>
 </html>
-                
