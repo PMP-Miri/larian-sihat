@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Larian Wira Sihat 3D: Kutip Sayur & Buah, Elak Makanan Tidak Berkhasiat!</title>
+  <title>Miri Neon Run: Larian Wira Sihat 3D (Coco Cabana → Pustaka Miri → Gua Niah)</title>
 
   <!-- MediaPipe Pose untuk kesan pergerakan badan & tangan -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -21,11 +21,16 @@
 
   <style>
     :root {
-      --panel-bg: rgba(15, 23, 42, 0.78);
-      --healthy-green: #10b981;
-      --danger-red: #f43f5e;
+      --glass: rgba(11, 16, 28, 0.82);
+      --glass-border: rgba(148, 163, 184, 0.22);
+      --healthy: #10b981;
+      --healthy-glow: #34d399;
+      --danger: #f43f5e;
+      --amber: #f59e0b;
       --gold: #facc15;
-      --sky: #38bdf8;
+      --cyan: #38bdf8;
+      --text-main: #f8fafc;
+      --text-dim: #94a3b8;
     }
 
     * {
@@ -38,8 +43,8 @@
     }
 
     body {
-      background: #0f172a;
-      color: #f8fafc;
+      background: #060913;
+      color: var(--text-main);
       overflow: hidden;
       width: 100vw;
       height: 100vh;
@@ -58,80 +63,411 @@
     #damage-flash {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle, rgba(244,63,94,0) 40%, rgba(244,63,94,0.65) 100%);
+      background: radial-gradient(circle, rgba(244,63,94,0) 35%, rgba(244,63,94,0.72) 100%);
       z-index: 90;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.15s ease-out;
+      transition: opacity 0.16s ease-out;
     }
 
-    /* HUD atas */
+    /* =======================================================
+       SKRIN LOADING GAYA NEON SCRAMBLE
+       ======================================================= */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: radial-gradient(circle at 50% 48%, rgba(245, 158, 11, 0.12) 0%, #070b14 55%, #04070d 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: opacity 0.45s ease;
+    }
+    #loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loading-card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(13, 18, 30, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 18px;
+      padding: 26px 28px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.72), 0 0 40px rgba(245, 158, 11, 0.08);
+      text-align: center;
+    }
+    .brand-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+    }
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #f97316;
+      box-shadow: 0 0 12px #f97316, 0 0 24px rgba(249, 115, 22, 0.7);
+      flex-shrink: 0;
+    }
+    .pulse-dot.green {
+      background: #10b981;
+      box-shadow: 0 0 12px #10b981;
+    }
+    .loading-title {
+      font-size: 1.55rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      color: #ffffff;
+    }
+    .loading-sub {
+      font-size: 0.84rem;
+      color: #94a3b8;
+      margin-top: 6px;
+      letter-spacing: 0.02em;
+    }
+    .progress-track {
+      margin-top: 22px;
+      width: 100%;
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+    #progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #ef4444, #f97316, #facc15);
+      box-shadow: 0 0 12px rgba(249, 115, 22, 0.8);
+      transition: width 0.14s linear;
+    }
+    .loading-meta {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      font-variant-numeric: tabular-nums;
+    }
+    #loading-pct { color: #fb923c; font-weight: 800; }
+
+    /* =======================================================
+       SKRIN MULA PETA NEON MIRI (GAYA NEON SCRAMBLE)
+       ======================================================= */
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 20px 18px 26px;
+      background: #060a14;
+      transition: opacity 0.45s ease;
+    }
+    #start-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #map-intro-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .start-top-bar {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      right: 16px;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      pointer-events: none;
+    }
+    .start-top-bar > * { pointer-events: auto; }
+    .map-badge {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.76rem;
+      color: #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .start-card {
+      position: relative;
+      z-index: 5;
+      width: 100%;
+      max-width: 600px;
+      background: rgba(11, 16, 28, 0.90);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 20px 24px 18px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.78), 0 0 40px rgba(56, 189, 248, 0.12);
+    }
+    .start-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .start-title {
+      font-size: 1.55rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: #fff;
+    }
+    .start-route {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+    .btn-play-neon {
+      background: linear-gradient(135deg, #f97316, #fbbf24);
+      color: #0b1120;
+      font-weight: 900;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+      padding: 13px 26px;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 26px rgba(249, 115, 22, 0.55);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-play-neon:hover {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 0 34px rgba(251, 191, 36, 0.72);
+    }
+    .btn-play-neon:active { transform: scale(0.98); }
+
+    .start-divider {
+      height: 1px;
+      background: rgba(148, 163, 184, 0.16);
+      margin: 14px 0 12px;
+    }
+    .controls-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px 14px;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+    }
+    .kbd-pill {
+      display: inline-block;
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #f8fafc;
+      margin-right: 4px;
+    }
+    .mission-strip {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .mission-good { color: #34d399; }
+    .mission-bad  { color: #fb7185; }
+    .map-attribution {
+      position: absolute;
+      left: 14px;
+      bottom: 10px;
+      z-index: 4;
+      font-size: 0.68rem;
+      color: rgba(203, 213, 225, 0.65);
+      background: rgba(6, 10, 20, 0.65);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    #load-warning {
+      display: none;
+      color: #fda4af;
+      font-size: 0.8rem;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* =======================================================
+       HUD PERMAINAN (DARK GLASSMORPHISM GAYA NEON SCRAMBLE)
+       ======================================================= */
     #hud {
       position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 20;
+      top: 12px;
+      left: 14px;
+      right: 14px;
+      z-index: 30;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 10px;
-      padding: 10px 14px;
       flex-wrap: wrap;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s ease;
     }
+    #hud.visible { opacity: 1; }
     #hud > * { pointer-events: auto; }
 
-    .brand-box {
-      background: var(--panel-bg);
-      padding: 8px 14px;
-      border-radius: 14px;
-      max-width: 360px;
-    }
-    .brand-title { font-size: 1.05rem; font-weight: 900; color: var(--gold); }
-    .privacy-note { font-size: 0.72rem; color: #cbd5e1; margin-top: 2px; }
-
-    .hud-center {
+    .telemetry-pill {
       display: flex;
       align-items: center;
-      gap: 18px;
-      background: var(--panel-bg);
-      padding: 6px 18px;
-      border-radius: 16px;
-      border: 2px solid rgba(255,255,255,0.18);
+      gap: 14px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 8px 16px;
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      flex-wrap: wrap;
     }
-    .lives-box { display: flex; align-items: center; gap: 5px; }
-    .heart-svg { width: 28px; height: 28px; transition: transform 0.2s, opacity 0.2s; }
-    .heart-svg.lost { opacity: 0.2; transform: scale(0.8); }
-    .hud-stat { text-align: center; }
-    .hud-label { font-size: 0.66rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; }
-    .hud-val { font-size: 1.5rem; font-weight: 900; color: #ffffff; text-shadow: 0 2px 0 rgba(0,0,0,0.4); }
-    #score-val { color: var(--gold); }
-
-    .controls-box { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-    .btn-ctrl {
-      background: #334155;
+    .hud-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      color: #fff;
+      padding-right: 6px;
+      border-right: 1px solid rgba(148, 163, 184, 0.22);
+    }
+    .hud-stat {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.05;
+    }
+    .hud-label {
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      font-weight: 800;
+    }
+    .hud-val {
+      font-size: 1.02rem;
+      font-weight: 900;
       color: #ffffff;
-      border: 1px solid #475569;
-      padding: 7px 12px;
-      border-radius: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    #score-val { color: #facc15; }
+    #combo-val { color: #38bdf8; }
+    #timer-val { color: #34d399; }
+
+    .lives-box {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .heart-svg {
+      width: 20px;
+      height: 20px;
+      filter: drop-shadow(0 0 6px rgba(244, 63, 94, 0.55));
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .heart-svg.lost { opacity: 0.2; transform: scale(0.75); filter: none; }
+
+    #state-badge {
+      background: rgba(56, 189, 248, 0.16);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #e0f2fe;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+    #state-badge.boost {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: #34d399;
+      color: #a7f3d0;
+    }
+    #state-badge.danger {
+      background: rgba(244, 63, 94, 0.25);
+      border-color: #fb7185;
+      color: #ffe4e6;
+    }
+
+    .controls-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 6px 10px;
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      flex-wrap: wrap;
+    }
+    .btn-ctrl {
+      background: rgba(30, 41, 59, 0.72);
+      color: #e2e8f0;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 6px 11px;
+      border-radius: 999px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 0.78rem;
+      font-size: 0.74rem;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
     }
-    .btn-ctrl.active-mode { background: rgba(56,189,248,0.25); border-color: var(--sky); color: #e0f2fe; }
+    .btn-ctrl:hover { background: rgba(51, 65, 85, 0.9); color: #fff; }
+    .btn-ctrl.active-mode {
+      background: rgba(56, 189, 248, 0.22);
+      border-color: var(--cyan);
+      color: #e0f2fe;
+    }
+    .btn-ctrl.auto-on {
+      background: rgba(245, 158, 11, 0.28);
+      border-color: var(--amber);
+      color: #fef3c7;
+    }
 
-    /* Paparan kamera kecil di penjuru */
+    /* =======================================================
+       PAPARAN KAMERA KECIL (KIRI BAWAH)
+       ======================================================= */
     #cam-panel {
       position: fixed;
       left: 14px;
       bottom: 14px;
-      width: 230px;
-      height: 172px;
+      width: 220px;
+      height: 158px;
       border-radius: 14px;
       overflow: hidden;
-      border: 3px solid var(--sky);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      border: 2px solid rgba(56, 189, 248, 0.72);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.62), 0 0 18px rgba(56, 189, 248, 0.22);
       background: #000;
-      z-index: 25;
+      z-index: 35;
     }
     #cam-panel.hidden { display: none; }
     #webcam-video {
@@ -146,49 +482,50 @@
       position: absolute;
       top: 0; bottom: 0;
       width: 0;
-      border-left: 2px dashed rgba(255,255,255,0.7);
+      border-left: 1.5px dashed rgba(255, 255, 255, 0.55);
     }
     .cam-zone-label {
       position: absolute;
-      bottom: 4px;
-      font-size: 0.6rem;
+      bottom: 5px;
+      font-size: 0.58rem;
       font-weight: 900;
-      color: #fff;
-      background: rgba(15,23,42,0.7);
+      color: #e2e8f0;
+      background: rgba(11, 16, 28, 0.78);
       padding: 1px 6px;
       border-radius: 6px;
       transform: translateX(-50%);
     }
-    .cam-zone-label.active { background: var(--sky); color: #0f172a; }
+    .cam-zone-label.active { background: var(--cyan); color: #060913; }
     #sensor-dot {
       position: absolute;
       top: 40%;
       left: 50%;
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       background: var(--gold);
-      border: 3px solid #fff;
+      border: 2.5px solid #fff;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 10px var(--gold);
+      box-shadow: 0 0 12px var(--gold);
       display: none;
     }
     .cam-title {
       position: absolute;
-      top: 4px; left: 6px;
-      font-size: 0.62rem;
+      top: 5px; left: 6px;
+      font-size: 0.58rem;
       font-weight: 900;
-      background: rgba(15,23,42,0.75);
-      color: var(--gold);
+      background: rgba(11, 16, 28, 0.82);
+      color: var(--cyan);
       padding: 2px 7px;
       border-radius: 6px;
+      letter-spacing: 0.05em;
     }
     #gesture-tag {
       position: absolute;
-      top: 4px; right: 6px;
-      font-size: 0.62rem;
+      top: 5px; right: 6px;
+      font-size: 0.6rem;
       font-weight: 900;
-      background: var(--healthy-green);
+      background: var(--healthy);
       color: #fff;
       padding: 2px 7px;
       border-radius: 6px;
@@ -196,95 +533,175 @@
       transition: opacity 0.2s;
     }
 
-    /* Mesej terapung */
-    .floating-popup {
+    /* =======================================================
+       MINI-PETA LANGSUNG MIRI (KANAN BAWAH - GAYA NEON SCRAMBLE)
+       ======================================================= */
+    #minimap-box {
       position: fixed;
-      left: 50%;
-      top: 24%;
-      transform: translate(-50%, 0);
-      padding: 9px 18px;
+      right: 14px;
+      bottom: 14px;
+      z-index: 35;
+      width: 248px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-radius: 14px;
-      font-size: 1.05rem;
-      font-weight: 900;
-      text-align: center;
-      z-index: 80;
+      padding: 8px 10px 9px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+      opacity: 0;
       pointer-events: none;
-      color: #fff;
-      max-width: 90vw;
-      animation: floatUpFade 1.2s ease-out forwards;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      transition: opacity 0.35s ease;
     }
-    @keyframes floatUpFade {
-      0% { opacity: 1; transform: translate(-50%, 0) scale(0.9); }
-      25% { opacity: 1; transform: translate(-50%, -12px) scale(1.04); }
-      100% { opacity: 0; transform: translate(-50%, -45px) scale(0.95); }
+    #minimap-box.visible { opacity: 1; }
+    .minimap-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    #zone-title {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .zone-pill {
+      font-size: 0.58rem;
+      font-weight: 900;
+      background: rgba(16, 185, 129, 0.22);
+      border: 1px solid rgba(52, 211, 153, 0.5);
+      color: #6ee7b7;
+      padding: 2px 6px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+    #minimap-canvas {
+      width: 100%;
+      height: 122px;
+      border-radius: 9px;
+      display: block;
+      background: #070d19;
+      border: 1px solid rgba(148, 163, 184, 0.16);
     }
 
-    /* Modal */
+    /* =======================================================
+       TOAST MAKLUM BALAS BAWAH TENGAH (GAYA NEON SCRAMBLE)
+       ======================================================= */
+    #toast-stack {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      z-index: 80;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      max-width: 92vw;
+    }
+    .neon-toast {
+      background: rgba(11, 16, 28, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: #f8fafc;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+      animation: toastPop 1.35s ease-out forwards;
+      white-space: nowrap;
+    }
+    .neon-toast.good  { border-color: rgba(52, 211, 153, 0.72); color: #d1fae5; }
+    .neon-toast.bad   { border-color: rgba(244, 63, 94, 0.85); color: #ffe4e6; }
+    .neon-toast.bonus { border-color: rgba(250, 204, 21, 0.85); color: #fef9c3; }
+    .toast-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    @keyframes toastPop {
+      0%   { opacity: 0; transform: translateY(12px) scale(0.92); }
+      14%  { opacity: 1; transform: translateY(0) scale(1); }
+      82%  { opacity: 1; transform: translateY(-4px) scale(1); }
+      100% { opacity: 0; transform: translateY(-16px) scale(0.95); }
+    }
+
+    /* =======================================================
+       MODAL TAMAT & LAPORAN
+       ======================================================= */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.50);
-      z-index: 200;
+      background: rgba(6, 10, 20, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 220;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
     }
     .modal-box {
-      background: rgba(30, 41, 59, 0.94);
-      border: 3px solid var(--sky);
-      border-radius: 24px;
-      padding: 24px;
-      max-width: 540px;
+      background: rgba(13, 19, 34, 0.96);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 22px;
+      padding: 26px;
+      max-width: 520px;
       width: 100%;
       text-align: center;
       max-height: 92vh;
       overflow-y: auto;
+      box-shadow: 0 24px 65px rgba(0, 0, 0, 0.75);
     }
-    .modal-title { font-size: 1.7rem; font-weight: 900; color: var(--gold); margin-bottom: 8px; }
-    .modal-score { font-size: 3rem; font-weight: 900; color: var(--healthy-green); margin: 10px 0; }
+    .modal-title { font-size: 1.55rem; font-weight: 900; color: var(--gold); letter-spacing: 0.03em; }
+    .modal-score { font-size: 2.8rem; font-weight: 900; color: var(--healthy-glow); margin: 10px 0 4px; }
+    .modal-sub-stats {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
     .guide-list {
-      background: #0f172a;
+      background: rgba(7, 11, 20, 0.88);
+      border: 1px solid rgba(148, 163, 184, 0.16);
       padding: 14px 16px;
       border-radius: 14px;
       text-align: left;
-      margin: 12px 0;
-      font-size: 0.93rem;
-      line-height: 1.55;
+      margin: 14px 0;
+      font-size: 0.9rem;
+      line-height: 1.6;
       color: #e2e8f0;
     }
-    .btn-primary {
-      background: var(--gold);
-      color: #0f172a;
-      font-weight: 900;
-      font-size: 1.1rem;
-      padding: 14px 28px;
-      border: none;
-      border-radius: 14px;
-      cursor: pointer;
-      margin-top: 10px;
-      box-shadow: 0 5px 0 #a16207;
-    }
     .btn-danger {
-      background: var(--danger-red);
-      color: #fff;
+      background: rgba(244, 63, 94, 0.18);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.5);
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       padding: 9px 16px;
-      border: none;
-      border-radius: 10px;
+      border-radius: 999px;
       cursor: pointer;
       margin-top: 12px;
     }
-    #load-warning { display: none; color: #fda4af; font-size: 0.85rem; margin-top: 10px; }
 
-    @media (max-width: 700px) {
-      .brand-box { display: none; }
-      .hud-center { gap: 10px; padding: 5px 10px; }
-      .heart-svg { width: 22px; height: 22px; }
-      .hud-val { font-size: 1.2rem; }
-      #cam-panel { width: 140px; height: 105px; left: 8px; bottom: 8px; }
+    @media (max-width: 780px) {
+      .hud-brand { display: none; }
+      .telemetry-pill { gap: 10px; padding: 6px 12px; }
+      .hud-val { font-size: 0.9rem; }
+      #cam-panel { width: 136px; height: 102px; left: 8px; bottom: 8px; }
+      #minimap-box { width: 162px; right: 8px; bottom: 8px; padding: 6px; }
+      #minimap-canvas { height: 84px; }
+      #toast-stack { bottom: 122px; }
+      .neon-toast { font-size: 0.76rem; white-space: normal; text-align: center; }
     }
   </style>
 </head>
@@ -293,41 +710,109 @@
   <canvas id="game-canvas"></canvas>
   <div id="damage-flash"></div>
 
-  <!-- HUD -->
-  <div id="hud">
-    <div class="brand-box">
-      <div class="brand-title">Larian Wira Sihat 3D</div>
-      <div class="privacy-note" id="cam-status">Memuatkan kamera... (Boleh juga guna anak panah / swipe).</div>
+  <!-- 1. SKRIN LOADING GAYA NEON SCRAMBLE -->
+  <div id="loading-screen">
+    <div class="loading-card">
+      <div class="brand-row">
+        <span class="pulse-dot"></span>
+        <div class="loading-title">MIRI NEON RUN</div>
+      </div>
+      <div class="loading-sub">Coco Cabana → Pustaka Miri → Gua Niah</div>
+      <div class="progress-track"><div id="progress-fill"></div></div>
+      <div class="loading-meta">
+        <span id="loading-step">Memuatkan peta Miri...</span>
+        <span id="loading-pct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. SKRIN MULA PETA NEON MIRI -->
+  <div id="start-screen">
+    <canvas id="map-intro-canvas"></canvas>
+
+    <div class="start-top-bar">
+      <div class="map-badge">
+        <span class="pulse-dot green"></span>
+        <span id="cam-status">Memuatkan kamera pantas... (Boleh juga guna ◀ ▶ ▲ ▼ / swipe)</span>
+      </div>
+      <div class="controls-pill">
+        <button class="btn-ctrl" id="btn-start-report" onclick="openReportModal()">Laporan (0)</button>
+      </div>
     </div>
 
-    <div class="hud-center">
-      <div>
-        <div class="hud-label">Nyawa</div>
-        <div class="lives-box">
-          <svg class="heart-svg" viewBox="0 0 32 32"><path d="M16 28 C16 28 3 19 3 10.5 C3 6 6.5 3 10.5 3 C13.2 3 15.2 4.5 16 6.5 C16.8 4.5 18.8 3 21.5 3 C25.5 3 29 6 29 10.5 C29 19 16 28 16 28 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/></svg>
-          <svg class="heart-svg" viewBox="0 0 32 32"><path d="M16 28 C16 28 3 19 3 10.5 C3 6 6.5 3 10.5 3 C13.2 3 15.2 4.5 16 6.5 C16.8 4.5 18.8 3 21.5 3 C25.5 3 29 6 29 10.5 C29 19 16 28 16 28 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/></svg>
-          <svg class="heart-svg" viewBox="0 0 32 32"><path d="M16 28 C16 28 3 19 3 10.5 C3 6 6.5 3 10.5 3 C13.2 3 15.2 4.5 16 6.5 C16.8 4.5 18.8 3 21.5 3 C25.5 3 29 6 29 10.5 C29 19 16 28 16 28 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/></svg>
+    <div class="start-card">
+      <div class="start-card-top">
+        <div>
+          <div class="brand-row" style="justify-content: flex-start;">
+            <span class="pulse-dot"></span>
+            <div class="start-title">MIRI NEON RUN</div>
+          </div>
+          <div class="start-route">Coco Cabana (Kuda Laut) → Grand Old Lady → Pustaka Miri → Gua Niah</div>
         </div>
+        <button class="btn-play-neon" onclick="startGame()">▶ MULA LARIAN</button>
       </div>
-      <div class="hud-stat">
-        <div class="hud-label">Masa</div>
-        <div class="hud-val" id="timer-val">60s</div>
+
+      <div class="start-divider"></div>
+
+      <div class="controls-strip">
+        <span><span class="kbd-pill">Badan / A D</span>Tukar Lorong</span>
+        <span>·</span>
+        <span><span class="kbd-pill">Angkat Tangan / Space</span>Lompat Pantas</span>
+        <span>·</span>
+        <span><span class="kbd-pill">Cangkung / S</span>Guling</span>
       </div>
-      <div class="hud-stat">
-        <div class="hud-label">Markah</div>
-        <div class="hud-val" id="score-val">0</div>
+      <div class="mission-strip">
+        <span class="mission-good">✓ Kutip Buah &amp; Sayur (+10) &amp; Gerbang Neon (+25)</span>
+        <span class="mission-bad">✕ Elak Makanan Proses &amp; Kenderaan (-1 Nyawa)</span>
       </div>
+      <div id="load-warning">Enjin 3D gagal dimuatkan. Pastikan peranti disambung ke internet, kemudian muat semula halaman.</div>
     </div>
 
-    <div class="controls-box">
-      <button class="btn-ctrl active-mode" id="btn-track-mode" onclick="toggleTrackingMode()">Kamera: Ikut Badan</button>
+    <div class="map-attribution">Peta Interaktif Gaya Neon · Bandaraya Miri, Sarawak · Modul Wira Sihat</div>
+  </div>
+
+  <!-- 3. HUD ATAS -->
+  <div id="hud">
+    <div class="telemetry-pill">
+      <div class="hud-brand">
+        <span class="pulse-dot"></span>
+        <span>MIRI NEON RUN</span>
+      </div>
+      <div class="hud-stat">
+        <span class="hud-label">Markah</span>
+        <span class="hud-val" id="score-val">0</span>
+      </div>
+      <div class="hud-stat">
+        <span class="hud-label">Laju</span>
+        <span class="hud-val" id="speed-val">0 km/h</span>
+      </div>
+      <div class="hud-stat">
+        <span class="hud-label">Kombo</span>
+        <span class="hud-val" id="combo-val">1x</span>
+      </div>
+      <div class="hud-stat">
+        <span class="hud-label">Masa</span>
+        <span class="hud-val" id="timer-val">60s</span>
+      </div>
+      <div class="lives-box" aria-label="Nyawa">
+        <svg class="heart-svg" viewBox="0 0 32 32"><path d="M16 28 C16 28 3 19 3 10.5 C3 6 6.5 3 10.5 3 C13.2 3 15.2 4.5 16 6.5 C16.8 4.5 18.8 3 21.5 3 C25.5 3 29 6 29 10.5 C29 19 16 28 16 28 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/></svg>
+        <svg class="heart-svg" viewBox="0 0 32 32"><path d="M16 28 C16 28 3 19 3 10.5 C3 6 6.5 3 10.5 3 C13.2 3 15.2 4.5 16 6.5 C16.8 4.5 18.8 3 21.5 3 C25.5 3 29 6 29 10.5 C29 19 16 28 16 28 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/></svg>
+        <svg class="heart-svg" viewBox="0 0 32 32"><path d="M16 28 C16 28 3 19 3 10.5 C3 6 6.5 3 10.5 3 C13.2 3 15.2 4.5 16 6.5 C16.8 4.5 18.8 3 21.5 3 C25.5 3 29 6 29 10.5 C29 19 16 28 16 28 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/></svg>
+      </div>
+      <span id="state-badge">SKY DROP</span>
+    </div>
+
+    <div class="controls-pill">
+      <button class="btn-ctrl active-mode" id="btn-track-mode" onclick="toggleTrackingMode()">Kamera: Badan</button>
       <button class="btn-ctrl" id="btn-cam-view" onclick="toggleCamPanel()">Sorok Kamera</button>
+      <button class="btn-ctrl" id="btn-autopilot" onclick="toggleAutoPilot()">Auto-Pilot</button>
       <button class="btn-ctrl" id="btn-open-report" onclick="openReportModal()">Laporan (0)</button>
+      <button class="btn-ctrl" onclick="backToMap()">Peta</button>
       <button class="btn-ctrl" onclick="startGame()">Mula Semula</button>
     </div>
   </div>
 
-  <!-- Paparan kamera kecil -->
+  <!-- 4. PAPARAN KAMERA KECIL -->
   <div id="cam-panel">
     <video id="webcam-video" playsinline muted></video>
     <div class="cam-zone-line" style="left: 38%;"></div>
@@ -340,42 +825,43 @@
     <div id="gesture-tag">LOMPAT!</div>
   </div>
 
-  <!-- Modal Mula -->
-  <div class="modal-overlay" id="start-modal">
-    <div class="modal-box">
-      <div class="modal-title">Misi Larian Wira Sihat!</div>
-      <p style="color: #cbd5e1; font-size: 0.95rem;">Lari di landasan kereta api, kutip makanan sihat!</p>
-      <div class="guide-list">
-        <div><strong>1. Tukar lorong:</strong> Gerak badan ke <strong>Kiri / Tengah / Kanan</strong> depan kamera (atau ◀ ▶ / swipe).</div>
-        <div style="margin-top: 6px;"><strong>2. Lompat Pantas:</strong> <strong>Angkat sebelah tangan atas bahu</strong> ATAU lompat (atau ▲ / Space / swipe atas).</div>
-        <div style="margin-top: 6px;"><strong>3. Guling:</strong> Cangkung (atau ▼ / swipe bawah).</div>
-        <div style="margin-top: 6px; color: #34d399;"><strong>4. Kutip buah & sayur</strong> (tapak & label hijau ✓): <strong>+10 Markah</strong>.</div>
-        <div style="margin-top: 6px; color: #fb7185;"><strong>5. Elak makanan proses</strong> (tapak amaran merah ✕) & <strong>kereta api</strong>: <strong>-1 Nyawa</strong>.</div>
-      </div>
-      <button class="btn-primary" onclick="startGame()">Mula Larian Sekarang!</button>
-      <div id="load-warning">Enjin 3D gagal dimuatkan. Pastikan peranti disambung ke internet, kemudian muat semula halaman.</div>
+  <!-- 5. MINI-PETA LANGSUNG MIRI -->
+  <div id="minimap-box">
+    <div class="minimap-head">
+      <span id="zone-title">Coco Cabana · Kuda Laut</span>
+      <span class="zone-pill" id="zone-pill">ZON 1/4</span>
     </div>
+    <canvas id="minimap-canvas" width="244" height="130"></canvas>
   </div>
 
-  <!-- Modal Tamat -->
+  <!-- 6. TOAST MAKLUM BALAS -->
+  <div id="toast-stack"></div>
+
+  <!-- 7. MODAL TAMAT -->
   <div class="modal-overlay" id="end-modal" style="display: none;">
     <div class="modal-box">
-      <div class="modal-title" id="end-title">Misi Selesai!</div>
-      <p style="color: #cbd5e1;">Jumlah Markah Larian Anda:</p>
+      <div class="brand-row" style="margin-bottom: 6px;">
+        <span class="pulse-dot green"></span>
+        <div class="modal-title" id="end-title">Misi Miri Selesai!</div>
+      </div>
       <div class="modal-score" id="final-score">0</div>
-      <p id="final-message" style="color: #f8fafc; line-height: 1.5; font-size: 1rem;"></p>
-      <button class="btn-primary" onclick="startGame()">Main Lagi (Pemain Seterusnya)</button>
+      <div class="modal-sub-stats" id="final-substats"></div>
+      <p id="final-message" style="color: #e2e8f0; line-height: 1.55; font-size: 0.96rem; margin-bottom: 16px;"></p>
+      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn-play-neon" onclick="startGame()">▶ MAIN LAGI</button>
+        <button class="btn-ctrl" style="padding: 12px 20px;" onclick="backToMap()">Lihat Peta Miri</button>
+      </div>
     </div>
   </div>
 
-  <!-- Modal Laporan -->
+  <!-- 8. MODAL LAPORAN -->
   <div class="modal-overlay" id="report-modal" style="display: none;">
     <div class="modal-box">
-      <div class="modal-title">Rekod Output: Larian Wira Sihat</div>
-      <p style="color: #94a3b8; font-size: 0.85rem;">Data disimpan secara tempatan di dalam peranti ini.</p>
+      <div class="modal-title">Rekod Output: Miri Neon Run</div>
+      <p style="color: #94a3b8; font-size: 0.84rem; margin-top: 4px;">Data disimpan secara tempatan di dalam peranti ini.</p>
       <div class="guide-list" id="report-summary-box">Memuatkan...</div>
       <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-        <button class="btn-primary" style="margin-top: 0;" onclick="downloadCSVReport()">Muat Turun CSV (Excel)</button>
+        <button class="btn-play-neon" onclick="downloadCSVReport()">Muat Turun CSV (Excel)</button>
         <button class="btn-ctrl" style="padding: 12px 20px;" onclick="closeReportModal()">Tutup</button>
       </div>
       <div>
@@ -386,31 +872,61 @@
 
   <script>
     setTimeout(function () {
-      if (!window.__gameReady) document.getElementById('load-warning').style.display = 'block';
-    }, 6000);
+      if (!window.__gameReady) {
+        var w = document.getElementById('load-warning');
+        if (w) w.style.display = 'block';
+        var ls = document.getElementById('loading-screen');
+        if (ls) ls.style.display = 'none';
+      }
+    }, 6500);
   </script>
 
   <script type="module">
     import * as THREE from 'three';
 
+    // Fallback roundRect untuk browser/tablet lama supaya tidak pernah crash
+    if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        const rad = Math.min(Array.isArray(r) ? r[0] : (r || 0), w / 2, h / 2);
+        this.moveTo(x + rad, y);
+        this.lineTo(x + w - rad, y);
+        this.quadraticCurveTo(x + w, y, x + w, y + rad);
+        this.lineTo(x + w, y + h - rad);
+        this.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+        this.lineTo(x + rad, y + h);
+        this.quadraticCurveTo(x, y + h, x, y + h - rad);
+        this.lineTo(x, y + rad);
+        this.quadraticCurveTo(x, y, x + rad, y);
+        this.closePath();
+        return this;
+      };
+    }
+
     // PILIHAN: Letakkan nama fail .glb di sini jika guna model 3D luaran (contoh: "./wira-sihat.glb").
     const CUSTOM_GLB_URL = "";
 
     // =====================================================================
-    // 1. KOLEKSI MAKANAN SIHAT (KUTIP) & PROSES/TIDAK SIHAT (ELAK)
+    // 1. KOLEKSI MAKANAN SIHAT & MAKANAN PROSES + DATA ZON MIRI
     // =====================================================================
     const ITEMS_CATALOG = [
-      { name: "Brokoli",        isHealthy: true,  model: "brokoli",  msg: "+10! Brokoli tinggi serat & vitamin!" },
-      { name: "Lobak Merah",    isHealthy: true,  model: "lobak",    msg: "+10! Lobak baik untuk kesihatan mata!" },
-      { name: "Epal",           isHealthy: true,  model: "epal",     msg: "+10! Epal kaya dengan vitamin!" },
-      { name: "Pisang",         isHealthy: true,  model: "pisang",   msg: "+10! Pisang beri tenaga semula jadi!" },
-      { name: "Tembikai",       isHealthy: true,  model: "tembikai", msg: "+10! Tembikai kaya air & vitamin C!" },
+      { name: "Brokoli",        isHealthy: true,  model: "brokoli",  msg: "Brokoli tinggi serat & vitamin!" },
+      { name: "Lobak Merah",    isHealthy: true,  model: "lobak",    msg: "Lobak baik untuk kesihatan mata!" },
+      { name: "Epal",           isHealthy: true,  model: "epal",     msg: "Epal segar kaya dengan vitamin!" },
+      { name: "Pisang",         isHealthy: true,  model: "pisang",   msg: "Pisang beri tenaga semula jadi!" },
+      { name: "Tembikai",       isHealthy: true,  model: "tembikai", msg: "Tembikai kaya air & vitamin C!" },
 
-      { name: "Air Gas",        isHealthy: false, model: "airgas",   msg: "-1 Nyawa! Air gas tinggi gula tersembunyi!" },
-      { name: "Sosej",          isHealthy: false, model: "sosej",    msg: "-1 Nyawa! Makanan ultra-proses tinggi garam & lemak!" },
-      { name: "Donat",          isHealthy: false, model: "donat",    msg: "-1 Nyawa! Donat tinggi gula & kalori!" },
-      { name: "Kentang Goreng", isHealthy: false, model: "kentang",  msg: "-1 Nyawa! Tinggi minyak & garam!" },
-      { name: "Lolipop",        isHealthy: false, model: "lolipop",  msg: "-1 Nyawa! Gula-gula berlebihan rosakkan gigi!" }
+      { name: "Air Gas",        isHealthy: false, model: "airgas",   msg: "Air gas tinggi gula tersembunyi!" },
+      { name: "Sosej",          isHealthy: false, model: "sosej",    msg: "Makanan ultra-proses tinggi garam & lemak!" },
+      { name: "Donat",          isHealthy: false, model: "donat",    msg: "Donat tinggi gula & kalori!" },
+      { name: "Kentang Goreng", isHealthy: false, model: "kentang",  msg: "Tinggi minyak & garam!" },
+      { name: "Lolipop",        isHealthy: false, model: "lolipop",  msg: "Gula-gula berlebihan rosakkan gigi!" }
+    ];
+
+    const MIRI_ZONES = [
+      { id: 0, startSec: 0,  name: "Coco Cabana · Kuda Laut",      short: "COCO CABANA",    pill: "ZON 1/4", color: "#f97316" },
+      { id: 1, startSec: 15, name: "Canada Hill · Grand Old Lady", short: "GRAND OLD LADY", pill: "ZON 2/4", color: "#38bdf8" },
+      { id: 2, startSec: 30, name: "Pustaka Negeri Sarawak, Miri", short: "PUSTAKA MIRI",   pill: "ZON 3/4", color: "#10b981" },
+      { id: 3, startSec: 45, name: "Taman Negara Gua Niah",        short: "GUA NIAH",       pill: "ZON 4/4", color: "#facc15" }
     ];
 
     // =====================================================================
@@ -428,32 +944,46 @@
         const now = audioCtx.currentTime;
         if (type === 'collect') {
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(587.33, now);
-          osc.frequency.setValueAtTime(880, now + 0.08);
+          osc.frequency.setValueAtTime(620, now);
+          osc.frequency.setValueAtTime(930, now + 0.07);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+          osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'ring') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523, now);
+          osc.frequency.exponentialRampToValueAtTime(1174, now + 0.24);
           gain.gain.setValueAtTime(0.22, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
-          osc.start(now); osc.stop(now + 0.22);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.28);
+          osc.start(now); osc.stop(now + 0.28);
         } else if (type === 'hit') {
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(190, now);
-          osc.frequency.linearRampToValueAtTime(90, now + 0.35);
-          gain.gain.setValueAtTime(0.3, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.38);
-          osc.start(now); osc.stop(now + 0.38);
+          osc.frequency.setValueAtTime(185, now);
+          osc.frequency.linearRampToValueAtTime(82, now + 0.34);
+          gain.gain.setValueAtTime(0.26, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.36);
+          osc.start(now); osc.stop(now + 0.36);
         } else if (type === 'jump') {
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(300, now);
-          osc.frequency.exponentialRampToValueAtTime(700, now + 0.15);
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.16);
-          osc.start(now); osc.stop(now + 0.16);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(760, now + 0.14);
+          gain.gain.setValueAtTime(0.11, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+          osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'drop') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(420, now);
+          osc.frequency.exponentialRampToValueAtTime(110, now + 0.55);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+          osc.start(now); osc.stop(now + 0.6);
         } else if (type === 'win') {
           osc.type = 'triangle';
           osc.frequency.setValueAtTime(523.25, now);
           osc.frequency.setValueAtTime(659.25, now + 0.1);
           osc.frequency.setValueAtTime(783.99, now + 0.2);
           osc.frequency.setValueAtTime(1046.5, now + 0.3);
-          gain.gain.setValueAtTime(0.28, now);
+          gain.gain.setValueAtTime(0.24, now);
           gain.gain.linearRampToValueAtTime(0.01, now + 0.55);
           osc.start(now); osc.stop(now + 0.55);
         }
@@ -463,55 +993,271 @@
     // =====================================================================
     // 3. KEADAAN PERMAINAN
     // =====================================================================
-    const LANES = [-2.5, 0, 2.5];
+    const LANES = [-2.6, 0, 2.6];
     const GRAVITY = 38;
-    const JUMP_V = 14.2;
-    const SPAWN_Z = -125;
+    const JUMP_V = 14.4;
+    const SPAWN_Z = -138;
     const SPAWN_GAP = 25;
-    const IDLE_SPEED = 0;
+    const GAME_DURATION = 60;
 
     let currentLane = 1;
-    let score = 0, lives = 3, timeLeft = 60, isRunning = false;
-    let healthyCount = 0, junkHitCount = 0;
+    let score = 0, lives = 3, timeLeft = GAME_DURATION, isRunning = false;
+    let combo = 1, maxCombo = 1, healthyCount = 0, junkHitCount = 0;
     let trackingMode = "BODY";
+    let autoPilot = false, usedAutoPilot = false;
     let activeControlUsed = "Sentuhan / Papan Kekunci";
-    let speed = IDLE_SPEED, distSinceSpawn = 0, shake = 0;
-    let lastShownSecond = 60;
+    let speed = 0, distSinceSpawn = 0, shake = 0;
+    let lastShownSecond = GAME_DURATION;
+    let currentZoneIdx = 0;
+    let spawnedLandmarks = new Set();
 
-    const player = { x: 0, y: 0, vy: 0, roll: 0, inv: 0, phase: 0, jumpBuffer: 0, facingY: Math.PI };
+    // Animasi SKY DROP permulaan
+    let skyDropTime = 0;
+    const SKY_DROP_DURATION = 1.35;
+
+    const player = { x: 0, y: 0, vy: 0, roll: 0, inv: 0, phase: 0, jumpBuffer: 0, boostTimer: 0 };
     let items = [];
-    let trains = [];
+    let vehicles = [];
+    let neonRings = [];
+    let landmarkObjects = [];
 
-    const scoreValEl = document.getElementById('score-val');
-    const timerValEl = document.getElementById('timer-val');
-    const heartSvgs = document.querySelectorAll('.heart-svg');
-    const damageFlashEl = document.getElementById('damage-flash');
-    const startModalEl = document.getElementById('start-modal');
-    const endModalEl = document.getElementById('end-modal');
-    const reportModalEl = document.getElementById('report-modal');
-    const camPanelEl = document.getElementById('cam-panel');
-    const sensorDotEl = document.getElementById('sensor-dot');
-    const gestureTagEl = document.getElementById('gesture-tag');
-    const zoneLabels = document.querySelectorAll('.cam-zone-label');
+    // Rujukan DOM
+    const loadingScreenEl = document.getElementById('loading-screen');
+    const progressFillEl  = document.getElementById('progress-fill');
+    const loadingStepEl   = document.getElementById('loading-step');
+    const loadingPctEl    = document.getElementById('loading-pct');
+    const startScreenEl   = document.getElementById('start-screen');
+    const hudEl           = document.getElementById('hud');
+    const minimapBoxEl    = document.getElementById('minimap-box');
+    const scoreValEl      = document.getElementById('score-val');
+    const speedValEl      = document.getElementById('speed-val');
+    const comboValEl      = document.getElementById('combo-val');
+    const timerValEl      = document.getElementById('timer-val');
+    const stateBadgeEl    = document.getElementById('state-badge');
+    const zoneTitleEl     = document.getElementById('zone-title');
+    const zonePillEl      = document.getElementById('zone-pill');
+    const heartSvgs       = document.querySelectorAll('.heart-svg');
+    const damageFlashEl   = document.getElementById('damage-flash');
+    const endModalEl      = document.getElementById('end-modal');
+    const reportModalEl   = document.getElementById('report-modal');
+    const camPanelEl      = document.getElementById('cam-panel');
+    const sensorDotEl     = document.getElementById('sensor-dot');
+    const gestureTagEl    = document.getElementById('gesture-tag');
+    const zoneLabels      = document.querySelectorAll('.cam-zone-label');
+    const toastStackEl    = document.getElementById('toast-stack');
 
     // =====================================================================
-    // 4. PENYEDIAAN DUNIA 3D
+    // 4. PETA NEON MIRI (INTRO FULLSCREEN & MINI-PETA LANGSUNG)
+    // =====================================================================
+    const mapIntroCanvas = document.getElementById('map-intro-canvas');
+    const mapIntroCtx = mapIntroCanvas.getContext('2d');
+    const minimapCanvas = document.getElementById('minimap-canvas');
+    const minimapCtx = minimapCanvas.getContext('2d');
+
+    // Titik koordinat ternormal (0..1) untuk peta bergaya Miri, Sarawak
+    const MIRI_ROUTE_PTS = [
+      { x: 0.25, y: 0.28, label: "Coco Cabana · Kuda Laut",      color: "#f97316", major: true },
+      { x: 0.42, y: 0.34, label: "Miri Times Square",            color: "#38bdf8", major: false },
+      { x: 0.56, y: 0.46, label: "Canada Hill · Grand Old Lady", color: "#38bdf8", major: true },
+      { x: 0.62, y: 0.63, label: "Pustaka Miri",                 color: "#10b981", major: true },
+      { x: 0.76, y: 0.79, label: "Taman Negara Gua Niah",        color: "#facc15", major: true }
+    ];
+
+    function sampleRoutePoint(progress) {
+      const p = Math.max(0, Math.min(1, progress));
+      const segs = MIRI_ROUTE_PTS.length - 1;
+      const scaled = p * segs;
+      const idx = Math.min(segs - 1, Math.floor(scaled));
+      const frac = scaled - idx;
+      const a = MIRI_ROUTE_PTS[idx];
+      const b = MIRI_ROUTE_PTS[idx + 1];
+      return { x: a.x + (b.x - a.x) * frac, y: a.y + (b.y - a.y) * frac };
+    }
+
+    function drawMiriNeonMap(ctx, w, h, t, progress, isMini) {
+      ctx.clearRect(0, 0, w, h);
+
+      // Latar gelap laut & daratan Miri
+      const bg = ctx.createLinearGradient(0, 0, w, h);
+      bg.addColorStop(0, '#070d1c');
+      bg.addColorStop(0.5, '#0b1426');
+      bg.addColorStop(1, '#08101f');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      // Garis pantai Laut China Selatan di sebelah barat (kiri)
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(w * 0.22, 0);
+      ctx.bezierCurveTo(w * 0.16, h * 0.32, w * 0.32, h * 0.55, w * 0.14, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fillStyle = '#050a14';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(w * 0.22, 0);
+      ctx.bezierCurveTo(w * 0.16, h * 0.32, w * 0.32, h * 0.55, w * 0.14, h);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.34)';
+      ctx.lineWidth = isMini ? 1.5 : 2.2;
+      ctx.stroke();
+
+      // Grid blok bandar & jalan sekunder Miri
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.10)';
+      ctx.lineWidth = 1;
+      const step = isMini ? 22 : 46;
+      for (let gx = w * 0.22; gx < w; gx += step) {
+        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx - 28, h); ctx.stroke();
+      }
+      for (let gy = 18; gy < h; gy += step) {
+        ctx.beginPath(); ctx.moveTo(w * 0.18, gy); ctx.lineTo(w, gy + 18); ctx.stroke();
+      }
+
+      // Laluan lebuhraya sekunder (Pan Borneo, Jalan Pujut, Lutong)
+      const sideRoads = [
+        { col: 'rgba(168, 85, 247, 0.42)', pts: [[0.08, 0.92], [0.38, 0.52], [0.65, 0.38], [0.96, 0.16]] },
+        { col: 'rgba(16, 185, 129, 0.38)', pts: [[0.52, 0.02], [0.50, 0.38], [0.62, 0.63], [0.68, 0.98]] },
+        { col: 'rgba(245, 158, 11, 0.42)', pts: [[0.14, 0.88], [0.46, 0.72], [0.76, 0.58], [0.98, 0.54]] }
+      ];
+      sideRoads.forEach(r => {
+        ctx.beginPath();
+        r.pts.forEach(([px, py], i) => {
+          if (i === 0) ctx.moveTo(px * w, py * h);
+          else ctx.lineTo(px * w, py * h);
+        });
+        ctx.strokeStyle = r.col;
+        ctx.lineWidth = isMini ? 2 : 3.2;
+        ctx.stroke();
+      });
+
+      // Laluan Utama Wira Sihat (glowing neon route!)
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Lapisan cahaya luar
+      ctx.beginPath();
+      MIRI_ROUTE_PTS.forEach((pt, i) => {
+        if (i === 0) ctx.moveTo(pt.x * w, pt.y * h);
+        else ctx.lineTo(pt.x * w, pt.y * h);
+      });
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.30)';
+      ctx.lineWidth = isMini ? 9 : 16;
+      ctx.stroke();
+
+      // Teras terang laluan
+      const routeGrad = ctx.createLinearGradient(w * 0.25, h * 0.28, w * 0.76, h * 0.79);
+      routeGrad.addColorStop(0, '#f97316');
+      routeGrad.addColorStop(0.35, '#38bdf8');
+      routeGrad.addColorStop(0.7, '#10b981');
+      routeGrad.addColorStop(1, '#facc15');
+      ctx.strokeStyle = routeGrad;
+      ctx.lineWidth = isMini ? 3.2 : 5.5;
+      ctx.stroke();
+
+      // Aliran cahaya bergerak sepanjang laluan
+      ctx.setLineDash([isMini ? 8 : 16, isMini ? 14 : 28]);
+      ctx.lineDashOffset = -t * (isMini ? 38 : 65);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = isMini ? 1.6 : 2.4;
+      ctx.stroke();
+      ctx.restore();
+
+      // Nama laut & kawasan Miri (skrin penuh sahaja)
+      if (!isMini) {
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.font = '800 12px system-ui, sans-serif';
+        ctx.fillText('LAUT CHINA SELATAN', w * 0.03, h * 0.45);
+        ctx.fillText('MARINA BAY', w * 0.22, h * 0.19);
+        ctx.fillText('PUJUT · BANDARAYA MIRI', w * 0.62, h * 0.24);
+        ctx.fillText('LEBUHRAYA PAN BORNEO', w * 0.69, h * 0.52);
+      }
+
+      // Nodus Mercu Tanda Miri
+      MIRI_ROUTE_PTS.forEach((pt, idx) => {
+        if (!pt.major && isMini) return;
+        const px = pt.x * w, py = pt.y * h;
+        const pulse = (Math.sin(t * 4 + idx) + 1) * 0.5;
+
+        // Cincin berdenyut pada titik mula & tamat
+        if (idx === 0 || idx === MIRI_ROUTE_PTS.length - 1) {
+          ctx.beginPath();
+          ctx.arc(px, py, (isMini ? 6 : 16) + pulse * (isMini ? 4 : 10), 0, Math.PI * 2);
+          ctx.strokeStyle = idx === 0 ? 'rgba(249, 115, 22, 0.65)' : 'rgba(250, 204, 21, 0.65)';
+          ctx.lineWidth = isMini ? 1.5 : 2.5;
+          ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.arc(px, py, isMini ? 3.5 : 6, 0, Math.PI * 2);
+        ctx.fillStyle = pt.color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // Pil label mercu tanda
+        const txt = isMini ? pt.label.split('·')[0].trim() : pt.label;
+        ctx.font = isMini ? '700 8.5px system-ui, sans-serif' : '800 12px system-ui, sans-serif';
+        const tw = ctx.measureText(txt).width + (isMini ? 10 : 18);
+        const th = isMini ? 15 : 24;
+        let lx = px + (isMini ? 7 : 14);
+        if (lx + tw > w - 8) lx = px - tw - (isMini ? 7 : 14);
+        const ly = py - th / 2;
+
+        ctx.fillStyle = 'rgba(11, 16, 28, 0.88)';
+        ctx.strokeStyle = pt.color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(lx, ly, tw, th, th / 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(txt, lx + (isMini ? 5 : 9), py + 0.5);
+      });
+
+      // Penanda kedudukan pemain langsung (untuk mini-peta)
+      if (isMini) {
+        const cur = sampleRoutePoint(progress);
+        const cx = cur.x * w, cy = cur.y * h;
+        const glowR = 8 + Math.sin(t * 8) * 2.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.28)';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#facc15';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+      }
+    }
+
+    // =====================================================================
+    // 5. DUNIA 3D MIRI NEON (JALAN RAYA MALAM, BANGUNAN BERCAHAYA, HUJAN)
     // =====================================================================
     const canvas = document.getElementById('game-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     const scene = new THREE.Scene();
-    const FOG_COLOR = 0xcfe9ff;
-    scene.fog = new THREE.Fog(FOG_COLOR, 55, 145);
+    scene.fog = new THREE.FogExp2(0x0c162d, 0.0082);
 
-    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 340);
     let isPortrait = false;
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x9a8a78, 2.2));
-    const sun = new THREE.DirectionalLight(0xfff4e0, 2.0);
-    sun.position.set(-6, 14, 10);
-    scene.add(sun);
+    // Pencahayaan malam neon dengan pantulan hangat & sian
+    scene.add(new THREE.HemisphereLight(0x8ec5ff, 0x1e293b, 1.55));
+    const moonLight = new THREE.DirectionalLight(0xcfe8ff, 1.5);
+    moonLight.position.set(-10, 22, 12);
+    scene.add(moonLight);
+    const runnerLight = new THREE.PointLight(0xffb454, 2.2, 16);
+    runnerLight.position.set(0, 3.2, 2);
+    scene.add(runnerLight);
 
     function canvasTex(c) {
       const t = new THREE.CanvasTexture(c);
@@ -525,209 +1271,661 @@
       return [c, c.getContext('2d')];
     }
 
-    // Langit
+    // Langit malam Miri (indigo gelap → ufuk biru neon)
     (function () {
       const [c, g] = makeCanvas(4, 256);
       const grad = g.createLinearGradient(0, 0, 0, 256);
-      grad.addColorStop(0, '#3fa9f5');
-      grad.addColorStop(0.6, '#a5d8ff');
-      grad.addColorStop(1, '#cfe9ff');
+      grad.addColorStop(0, '#050914');
+      grad.addColorStop(0.52, '#0e1b36');
+      grad.addColorStop(0.84, '#1b3159');
+      grad.addColorStop(1, '#263f6d');
       g.fillStyle = grad;
       g.fillRect(0, 0, 4, 256);
       scene.background = canvasTex(c);
     })();
 
-    // Landasan
-    function makeTrackCanvas() {
+    // Tekstur jalan raya asfalt malam (3 lorong + lintasan belang + tepi neon)
+    function makeNeonRoadCanvas() {
       const [c, g] = makeCanvas(512, 512);
-      g.fillStyle = '#8a7560';
+      g.fillStyle = '#151c2c';
       g.fillRect(0, 0, 512, 512);
-      for (let i = 0; i < 6000; i++) {
-        const s = Math.random() * 3 + 1;
-        const v = (95 + Math.random() * 85) | 0;
-        g.fillStyle = `rgb(${v},${(v * 0.86) | 0},${(v * 0.72) | 0})`;
-        g.fillRect(Math.random() * 512, Math.random() * 512, s, s);
+      // Tekstur asfalt halus
+      for (let i = 0; i < 4500; i++) {
+        const v = (24 + Math.random() * 24) | 0;
+        g.fillStyle = `rgb(${v},${v + 5},${v + 15})`;
+        g.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
       }
-      [128, 256, 384].forEach(cx => {
-        for (let k = 0; k < 8; k++) {
-          const y = k * 64 + 22;
-          g.fillStyle = '#5b3a1e';
-          g.fillRect(cx - 50, y, 100, 20);
-          g.fillStyle = 'rgba(0,0,0,0.28)';
-          g.fillRect(cx - 50, y + 16, 100, 4);
+      // Garis tepi neon sian-amber
+      g.fillStyle = '#38bdf8';
+      g.fillRect(8, 0, 8, 512);
+      g.fillRect(496, 0, 8, 512);
+
+      // Garis pemisah 3 lorong (putih berkilau putus-putus)
+      g.fillStyle = 'rgba(226, 232, 240, 0.85)';
+      [172, 340].forEach(lx => {
+        for (let y = 16; y < 512; y += 96) {
+          g.fillRect(lx - 4, y, 8, 48);
         }
       });
-      g.fillStyle = 'rgba(0,0,0,0.25)';
-      g.fillRect(0, 0, 10, 512);
-      g.fillRect(502, 0, 10, 512);
+
+      // Lintasan belang zebra berkala
+      g.fillStyle = 'rgba(248, 250, 252, 0.82)';
+      for (let x = 36; x < 470; x += 42) {
+        g.fillRect(x, 420, 24, 68);
+      }
       return c;
     }
 
-    const TRACK_LEN = 220;
-    const trackTex = canvasTex(makeTrackCanvas());
-    trackTex.wrapS = trackTex.wrapT = THREE.RepeatWrapping;
-    trackTex.repeat.set(1, TRACK_LEN / 10);
-    const track = new THREE.Mesh(
-      new THREE.PlaneGeometry(10, TRACK_LEN),
-      new THREE.MeshLambertMaterial({ map: trackTex })
+    const ROAD_LEN = 260;
+    const roadTex = canvasTex(makeNeonRoadCanvas());
+    roadTex.wrapS = roadTex.wrapT = THREE.RepeatWrapping;
+    roadTex.repeat.set(1, ROAD_LEN / 16);
+    const road = new THREE.Mesh(
+      new THREE.PlaneGeometry(10.6, ROAD_LEN),
+      new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.32, metalness: 0.18 })
     );
-    track.rotation.x = -Math.PI / 2;
-    track.position.set(0, 0, -TRACK_LEN / 2 + 15);
-    scene.add(track);
+    road.rotation.x = -Math.PI / 2;
+    road.position.set(0, 0, -ROAD_LEN / 2 + 18);
+    scene.add(road);
 
-    const outerGround = new THREE.Mesh(
-      new THREE.PlaneGeometry(140, TRACK_LEN),
-      new THREE.MeshLambertMaterial({ color: 0x8d99ae })
+    // Tanah bandar gelap + laut berkilau di sebelah kiri
+    const cityFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(240, ROAD_LEN),
+      new THREE.MeshLambertMaterial({ color: 0x0a101e })
     );
-    outerGround.rotation.x = -Math.PI / 2;
-    outerGround.position.set(0, -0.02, -TRACK_LEN / 2 + 15);
-    scene.add(outerGround);
+    cityFloor.rotation.x = -Math.PI / 2;
+    cityFloor.position.set(0, -0.04, -ROAD_LEN / 2 + 18);
+    scene.add(cityFloor);
 
-    const railMat = new THREE.MeshLambertMaterial({ color: 0xd8dee4 });
-    const railGeo = new THREE.BoxGeometry(0.14, 0.16, TRACK_LEN);
-    LANES.forEach(lx => {
-      [-0.55, 0.55].forEach(off => {
-        const r = new THREE.Mesh(railGeo, railMat);
-        r.position.set(lx + off, 0.08, -TRACK_LEN / 2 + 15);
-        scene.add(r);
-      });
-    });
-
-    const wallMat = new THREE.MeshLambertMaterial({ color: 0xe7e5e4 });
-    const wallTopMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
+    // Laluan pejalan kaki & penghadang tepi gaya Neon Scramble
+    const sidewalkMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
+    const curbGlowMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
     [-1, 1].forEach(side => {
-      const w = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.1, TRACK_LEN), wallMat);
-      w.position.set(side * 5.2, 0.55, -TRACK_LEN / 2 + 15);
-      scene.add(w);
-      const t = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.1, TRACK_LEN), wallTopMat);
-      t.position.set(side * 5.2, 1.15, -TRACK_LEN / 2 + 15);
-      scene.add(t);
+      const sw = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.22, ROAD_LEN), sidewalkMat);
+      sw.position.set(side * 6.6, 0.11, -ROAD_LEN / 2 + 18);
+      scene.add(sw);
+      const curb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, ROAD_LEN), curbGlowMat);
+      curb.position.set(side * 5.35, 0.24, -ROAD_LEN / 2 + 18);
+      scene.add(curb);
     });
 
-    // Bangunan kiri & kanan
-    function makeWindowCanvas() {
-      const [c, g] = makeCanvas(128, 128);
-      g.fillStyle = '#ffffff';
-      g.fillRect(0, 0, 128, 128);
-      for (let r = 0; r < 4; r++) {
-        for (let col = 0; col < 3; col++) {
-          g.fillStyle = '#1e293b';
-          g.fillRect(12 + col * 40, 8 + r * 30, 26, 20);
-          g.fillStyle = 'rgba(255,255,255,0.35)';
-          g.fillRect(14 + col * 40, 10 + r * 30, 8, 16);
+    // Tekstur tingkap bangunan malam bercahaya (warm gold + cool cyan)
+    function makeNightBuildingCanvas(tint) {
+      const [c, g] = makeCanvas(128, 256);
+      g.fillStyle = tint;
+      g.fillRect(0, 0, 128, 256);
+      for (let r = 0; r < 12; r++) {
+        for (let col = 0; col < 5; col++) {
+          const lit = Math.random();
+          if (lit < 0.42) g.fillStyle = '#0b1220';
+          else if (lit < 0.78) g.fillStyle = '#fde68a';
+          else if (lit < 0.92) g.fillStyle = '#bae6fd';
+          else g.fillStyle = '#fb923c';
+          g.fillRect(10 + col * 23, 8 + r * 20, 15, 11);
         }
       }
       return c;
     }
-    const windowTexBase = canvasTex(makeWindowCanvas());
-    const BUILDING_COLORS = [0xf87171, 0xfbbf24, 0x60a5fa, 0x34d399, 0xc084fc, 0xfb923c, 0xf472b6, 0x94a3b8];
+
+    const nightWinTex1 = canvasTex(makeNightBuildingCanvas('#10192b'));
+    const nightWinTex2 = canvasTex(makeNightBuildingCanvas('#162038'));
+    [nightWinTex1, nightWinTex2].forEach(t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; });
+
+    // Papan tanda menegak neon bertemakan Miri & Pemakanan Sihat
+    const NEON_SIGNS = [
+      { text: "MIRI SIHAT",    bg: "#0f172a", glow: "#10b981" },
+      { text: "COCO CABANA",   bg: "#1e1b4b", glow: "#f97316" },
+      { text: "PUSTAKA MIRI",  bg: "#064e3b", glow: "#34d399" },
+      { text: "GUA NIAH",      bg: "#3b1708", glow: "#facc15" },
+      { text: "SUKU SEPARUH",  bg: "#0c253a", glow: "#38bdf8" },
+      { text: "KURANG GULA",   bg: "#3b0a1e", glow: "#fb7185" }
+    ];
+    const neonSignMats = NEON_SIGNS.map(s => {
+      const [c, g] = makeCanvas(96, 384);
+      g.fillStyle = s.bg;
+      g.fillRect(0, 0, 96, 384);
+      g.strokeStyle = s.glow;
+      g.lineWidth = 8;
+      g.strokeRect(6, 6, 84, 372);
+      g.fillStyle = '#ffffff';
+      g.font = '900 22px system-ui, sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      const chars = s.text.replace(/\s+/g, ' ').split('');
+      const stepY = 330 / Math.max(chars.length, 1);
+      chars.forEach((ch, idx) => {
+        g.fillText(ch, 48, 28 + idx * stepY + stepY * 0.5);
+      });
+      return new THREE.MeshBasicMaterial({ map: canvasTex(c) });
+    });
+
     const buildings = [];
     [-1, 1].forEach(side => {
-      let z = 15;
-      for (let i = 0; i < 14; i++) {
-        const w = 5 + Math.random() * 3;
-        const h = 7 + Math.random() * 16;
-        const d = 7 + Math.random() * 7;
-        const tex = windowTexBase.clone();
-        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-        tex.repeat.set(Math.max(1, Math.round(d / 3)), Math.max(1, Math.round(h / 3.2)));
+      let z = 18;
+      for (let i = 0; i < 16; i++) {
+        const w = 6 + Math.random() * 4.5;
+        const h = 11 + Math.random() * 24;
+        const d = 8 + Math.random() * 7;
+        const baseTex = i % 2 === 0 ? nightWinTex1 : nightWinTex2;
+        const tex = baseTex.clone();
+        tex.repeat.set(Math.max(1, Math.round(d / 5)), Math.max(1, Math.round(h / 7)));
         tex.needsUpdate = true;
+
+        const grp = new THREE.Group();
         const mesh = new THREE.Mesh(
           new THREE.BoxGeometry(w, h, d),
-          new THREE.MeshLambertMaterial({ map: tex, color: BUILDING_COLORS[(Math.random() * BUILDING_COLORS.length) | 0] })
+          new THREE.MeshBasicMaterial({ map: tex })
         );
-        mesh.position.set(side * (9.5 + w / 2), h / 2, z - d / 2);
-        mesh.userData = { side, d };
-        scene.add(mesh);
-        buildings.push(mesh);
-        z -= d + 0.5 + Math.random() * 1.5;
+        mesh.position.y = h / 2;
+        grp.add(mesh);
+
+        // Bingkai neon di bumbung bangunan
+        const trimCol = [0x38bdf8, 0xf97316, 0x10b981, 0xfacc15][i % 4];
+        const roofTrim = new THREE.Mesh(
+          new THREE.BoxGeometry(w + 0.2, 0.25, d + 0.2),
+          new THREE.MeshBasicMaterial({ color: trimCol })
+        );
+        roofTrim.position.y = h + 0.1;
+        grp.add(roofTrim);
+
+        // Tambah papan tanda neon menegak pada sebahagian bangunan
+        if (i % 3 === 0) {
+          const sign = new THREE.Mesh(
+            new THREE.BoxGeometry(0.25, 5.4, 1.35),
+            neonSignMats[(i + (side > 0 ? 2 : 0)) % neonSignMats.length]
+          );
+          sign.position.set(-side * (w / 2 + 0.55), Math.min(h - 3.5, 8.5), 0);
+          grp.add(sign);
+        }
+
+        grp.position.set(side * (10.2 + w / 2), 0, z - d / 2);
+        grp.userData = { side, d };
+        scene.add(grp);
+        buildings.push(grp);
+        z -= d + 2.2 + Math.random() * 2.5;
       }
     });
 
-    // Tiang lampu
+    // Tiang lampu jalan neon + pagar tepi
     const poles = [];
-    const POLE_SPACING = 16, POLE_COUNT = 10;
-    const poleMat = new THREE.MeshLambertMaterial({ color: 0x475569 });
-    const lampMat = new THREE.MeshBasicMaterial({ color: 0xfff3b0 });
+    const POLE_SPACING = 18, POLE_COUNT = 12;
+    const poleMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+    const lampMat = new THREE.MeshBasicMaterial({ color: 0x7dd3fc });
     [-1, 1].forEach(side => {
       for (let i = 0; i < POLE_COUNT; i++) {
         const g = new THREE.Group();
-        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 4.5, 8), poleMat);
-        post.position.y = 2.25;
-        const arm = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 0.08), poleMat);
-        arm.position.set(-side * 0.55, 4.45, 0);
-        const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.12, 0.25), lampMat);
-        lamp.position.set(-side * 1.05, 4.37, 0);
-        g.add(post, arm, lamp);
-        g.position.set(side * 5.7, 0, 10 - i * POLE_SPACING);
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 5.4, 8), poleMat);
+        post.position.y = 2.7;
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.08), poleMat);
+        arm.position.set(-side * 0.72, 5.35, 0);
+        const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.12, 0.22), lampMat);
+        lamp.position.set(-side * 1.25, 5.26, 0);
+        // Penghadang kecil tepi jalan
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.65, 3.2), poleMat);
+        rail.position.set(-side * 0.35, 0.52, 0);
+        g.add(post, arm, lamp, rail);
+        g.position.set(side * 5.85, 0, 14 - i * POLE_SPACING);
         scene.add(g);
         poles.push(g);
       }
     });
 
-    // Kereta api
-    function makeTrainSideCanvas() {
-      const [c, g] = makeCanvas(512, 128);
-      g.fillStyle = '#ffffff';
-      g.fillRect(0, 0, 512, 128);
-      for (let x = 14; x < 500; x += 84) {
-        g.fillStyle = '#0f172a';
-        g.fillRect(x, 22, 62, 42);
-        g.fillStyle = 'rgba(255,255,255,0.3)';
-        g.fillRect(x + 4, 26, 14, 34);
-      }
-      g.fillStyle = 'rgba(0,0,0,0.25)';
-      g.fillRect(0, 84, 512, 10);
-      g.fillStyle = 'rgba(0,0,0,0.45)';
-      g.fillRect(0, 118, 512, 10);
-      return c;
+    // Hujan tropika / garisan kelajuan halus gaya Neon Scramble
+    const RAIN_COUNT = 220;
+    const rainPositions = new Float32Array(RAIN_COUNT * 6);
+    for (let i = 0; i < RAIN_COUNT; i++) {
+      const rx = (Math.random() - 0.5) * 34;
+      const ry = Math.random() * 18 + 1;
+      const rz = -Math.random() * 85 + 10;
+      rainPositions[i * 6]     = rx; rainPositions[i * 6 + 1] = ry;        rainPositions[i * 6 + 2] = rz;
+      rainPositions[i * 6 + 3] = rx; rainPositions[i * 6 + 4] = ry - 0.75; rainPositions[i * 6 + 5] = rz + 0.55;
     }
-    const trainSideTex = canvasTex(makeTrainSideCanvas());
-    const TRAIN_LEN = 11;
-    const trainBodyGeo = new THREE.BoxGeometry(2.3, 2.9, TRAIN_LEN);
-    const TRAIN_COLORS = [0xe11d48, 0x2563eb, 0xf59e0b, 0x16a34a];
-    const trainMats = TRAIN_COLORS.map(col => ({
-      side: new THREE.MeshLambertMaterial({ map: trainSideTex, color: col }),
-      plain: new THREE.MeshLambertMaterial({ color: col })
-    }));
-    const trainRoofMat = new THREE.MeshLambertMaterial({ color: 0x9ca3af });
-    const windshieldMat = new THREE.MeshLambertMaterial({ color: 0x1e3a5f });
-    const headlightMat = new THREE.MeshBasicMaterial({ color: 0xfff7cc });
-    const bumperMat = new THREE.MeshLambertMaterial({ color: 0x1f2937 });
-    const windshieldGeo = new THREE.BoxGeometry(1.8, 1.0, 0.06);
-    const headlightGeo = new THREE.BoxGeometry(0.35, 0.2, 0.06);
-    const bumperGeo = new THREE.BoxGeometry(2.3, 0.35, 0.3);
+    const rainGeo = new THREE.BufferGeometry();
+    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+    const rainLines = new THREE.LineSegments(
+      rainGeo,
+      new THREE.LineBasicMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.32 })
+    );
+    scene.add(rainLines);
 
-    function spawnTrain(lane, z) {
-      const m = trainMats[(Math.random() * trainMats.length) | 0];
-      const g = new THREE.Group();
-      const body = new THREE.Mesh(trainBodyGeo, [m.side, m.side, trainRoofMat, m.plain, m.plain, m.plain]);
-      body.position.y = 1.6;
-      const ws = new THREE.Mesh(windshieldGeo, windshieldMat);
-      ws.position.set(0, 2.25, TRAIN_LEN / 2 + 0.02);
-      const hl1 = new THREE.Mesh(headlightGeo, headlightMat);
-      hl1.position.set(-0.7, 0.85, TRAIN_LEN / 2 + 0.02);
-      const hl2 = hl1.clone();
-      hl2.position.x = 0.7;
-      const bumper = new THREE.Mesh(bumperGeo, bumperMat);
-      bumper.position.set(0, 0.35, TRAIN_LEN / 2 + 0.1);
-      g.add(body, ws, hl1, hl2, bumper);
-      g.position.set(LANES[lane], 0, z);
-      scene.add(g);
-      trains.push({ g, x: LANES[lane], hit: false });
+    // =====================================================================
+    // 6. MERCU TANDA IKONIK 3D MIRI, SARAWAK
+    //    (1. Kuda Laut Coco Cabana, 2. Grand Old Lady & City Fan,
+    //     3. Pustaka Miri, 4. Gua Niah)
+    // =====================================================================
+    function makeLandmarkBanner(title, subtitle, accentHex) {
+      const [c, g] = makeCanvas(512, 112);
+      g.fillStyle = 'rgba(9, 14, 26, 0.92)';
+      g.beginPath(); g.roundRect(6, 6, 500, 100, 22); g.fill();
+      g.lineWidth = 6;
+      g.strokeStyle = accentHex;
+      g.stroke();
+      g.fillStyle = accentHex;
+      g.font = '900 34px system-ui, sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(title, 256, 44, 470);
+      g.fillStyle = '#e2e8f0';
+      g.font = '700 20px system-ui, sans-serif';
+      g.fillText(subtitle, 256, 82, 470);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(c), transparent: true, depthWrite: false }));
+      sp.scale.set(9.2, 2.0, 1);
+      return sp;
+    }
+
+    function buildCocoCabanaSeahorse() {
+      const grp = new THREE.Group();
+
+      // Gerbang Marina Bay / Coco Cabana merentasi jalan
+      const archGeo = new THREE.TorusGeometry(6.3, 0.24, 10, 32, Math.PI);
+      const arch = new THREE.Mesh(archGeo, new THREE.MeshBasicMaterial({ color: 0xf97316 }));
+      arch.position.set(0, 3.6, 0);
+      grp.add(arch);
+      const postMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4 });
+      [-6.3, 6.3].forEach(px => {
+        const p = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 4.2, 12), postMat);
+        p.position.set(px, 2.1, 0);
+        grp.add(p);
+      });
+      const banner = makeLandmarkBanner("COCO CABANA · MIRI", "Mercu Tanda Kuda Laut & Marina Bay", "#f97316");
+      banner.position.set(0, 11.2, 0);
+      grp.add(banner);
+
+      // Menara Rumah Api & Arca Kuda Laut Emas-Putih (sebelah kiri tepi laut)
+      const lighthouse = new THREE.Group();
+      lighthouse.position.set(-10.8, 0, -4);
+
+      // Tapak pantai bercahaya
+      const baseDeck = new THREE.Mesh(
+        new THREE.CylinderGeometry(3.8, 4.4, 1.2, 24),
+        new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 })
+      );
+      baseDeck.position.y = 0.6;
+      lighthouse.add(baseDeck);
+
+      // Menara rumah api putih-oren ikonik Coco Cabana
+      const tower = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.05, 1.75, 11.5, 20),
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, emissive: 0x1e293b, roughness: 0.4 })
+      );
+      tower.position.y = 6.9;
+      lighthouse.add(tower);
+      const stripe = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.32, 1.48, 2.2, 20),
+        new THREE.MeshBasicMaterial({ color: 0xf97316 })
+      );
+      stripe.position.y = 7.4;
+      lighthouse.add(stripe);
+
+      // Lampu rumah api berputar di puncak
+      const beacon = new THREE.Mesh(new THREE.SphereGeometry(1.1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+      beacon.position.y = 13.2;
+      lighthouse.add(beacon);
+
+      // Arca 3D Kuda Laut (Seahorse) bercahaya di hadapan menara!
+      const seahorse = new THREE.Group();
+      seahorse.position.set(2.8, 1.2, 2.2);
+      seahorse.rotation.y = 0.45;
+      const shMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xd97706, emissiveIntensity: 0.45, roughness: 0.3 });
+      const shFinMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+      // Ekor melingkar (spiral)
+      const tail = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.28, 12, 24, Math.PI * 1.55), shMat);
+      tail.position.set(0, 1.1, 0);
+      tail.rotation.z = Math.PI * 0.7;
+      seahorse.add(tail);
+
+      // Badan melengkung kuda laut
+      const belly = new THREE.Mesh(new THREE.SphereGeometry(1.18, 18, 16), shMat);
+      belly.scale.set(0.85, 1.55, 0.72);
+      belly.position.set(0.35, 3.3, 0);
+      belly.rotation.z = -0.22;
+      seahorse.add(belly);
+
+      // Leher & kepala kuda laut + muncung panjang
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.65, 1.9, 14), shMat);
+      neck.position.set(0.1, 5.2, 0);
+      neck.rotation.z = 0.25;
+      seahorse.add(neck);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.76, 16, 14), shMat);
+      head.scale.set(1.15, 0.95, 0.82);
+      head.position.set(0.28, 6.2, 0);
+      seahorse.add(head);
+
+      const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.34, 1.55, 12), shMat);
+      snout.rotation.z = -Math.PI / 2 - 0.18;
+      snout.position.set(1.25, 6.0, 0);
+      seahorse.add(snout);
+
+      // Mahkota & sirip belakang kuda laut (neon sian)
+      for (let k = 0; k < 5; k++) {
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.68, 6), shFinMat);
+        spike.position.set(-0.35 - k * 0.12, 6.95 - k * 0.55, 0);
+        spike.rotation.z = 0.6 + k * 0.22;
+        seahorse.add(spike);
+      }
+      const dorsalFin = new THREE.Mesh(
+        new THREE.CircleGeometry(0.95, 12, -Math.PI * 0.4, Math.PI * 0.8),
+        new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide })
+      );
+      dorsalFin.position.set(-0.6, 3.4, 0);
+      dorsalFin.rotation.y = 0;
+      seahorse.add(dorsalFin);
+
+      // Mata kuda laut
+      const shEye = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      shEye.position.set(0.55, 6.38, 0.55);
+      seahorse.add(shEye);
+
+      lighthouse.add(seahorse);
+      grp.add(lighthouse);
+
+      // Pokok kelapa pantai Coco Cabana di kanan
+      [-1, 1].forEach(idx => {
+        const palm = new THREE.Group();
+        palm.position.set(9.2, 0, idx * 4.5);
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.32, 6.5, 8), new THREE.MeshLambertMaterial({ color: 0x78350f }));
+        trunk.position.y = 3.25;
+        trunk.rotation.z = 0.12;
+        palm.add(trunk);
+        const leafMat = new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x047857, emissiveIntensity: 0.35 });
+        for (let f = 0; f < 6; f++) {
+          const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.45, 2.8, 5), leafMat);
+          const ang = (f / 6) * Math.PI * 2;
+          leaf.position.set(Math.cos(ang) * 1.1 - 0.35, 6.3, Math.sin(ang) * 1.1);
+          leaf.rotation.set(Math.sin(ang) * 1.15, 0, -Math.cos(ang) * 1.15);
+          palm.add(leaf);
+        }
+        grp.add(palm);
+      });
+
+      return grp;
+    }
+
+    function buildGrandOldLadyAndCityFan() {
+      const grp = new THREE.Group();
+
+      // Gerbang Miri City Fan (bentuk kipas separa bulatan bercahaya!)
+      const fanMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+      const fanArch = new THREE.Mesh(new THREE.TorusGeometry(6.5, 0.22, 10, 32, Math.PI), fanMat);
+      fanArch.position.set(0, 3.6, 0);
+      grp.add(fanArch);
+      for (let i = 1; i <= 7; i++) {
+        const ang = (i / 8) * Math.PI;
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.6, 0.12), new THREE.MeshBasicMaterial({ color: 0x7dd3fc }));
+        rib.position.set(Math.cos(ang) * 7.6, 3.6 + Math.sin(ang) * 7.6, 0);
+        rib.rotation.z = ang - Math.PI / 2;
+        grp.add(rib);
+      }
+      const banner = makeLandmarkBanner("GRAND OLD LADY & CITY FAN", "Telaga Minyak No. 1 · Canada Hill Miri", "#38bdf8");
+      banner.position.set(0, 12.2, 0);
+      grp.add(banner);
+
+      // The Grand Old Lady (Menara Telaga Minyak No. 1 di atas Bukit Kanada, sebelah kanan)
+      const hillGrp = new THREE.Group();
+      hillGrp.position.set(11.5, 0, -3);
+      const hill = new THREE.Mesh(
+        new THREE.CylinderGeometry(4.2, 6.5, 3.6, 16),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, emissive: 0x0f172a, roughness: 0.85 })
+      );
+      hill.position.y = 1.8;
+      hillGrp.add(hill);
+
+      // Menara kekisi kayu/besi Grand Old Lady (30m iconic derrick)
+      const beamMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xb45309, emissiveIntensity: 0.45 });
+      const corners = [[-1.6, -1.6], [1.6, -1.6], [1.6, 1.6], [-1.6, 1.6]];
+      corners.forEach(([cx, cz]) => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.17, 14.5, 6), beamMat);
+        leg.position.set(cx * 0.65, 10.6, cz * 0.65);
+        leg.rotation.z = cx > 0 ? 0.095 : -0.095;
+        leg.rotation.x = cz > 0 ? -0.095 : 0.095;
+        hillGrp.add(leg);
+      });
+      // Lapisan palang melintang menara
+      for (let lv = 0; lv < 5; lv++) {
+        const y = 4.8 + lv * 2.7;
+        const w = 3.0 - lv * 0.48;
+        const ring = new THREE.Mesh(new THREE.BoxGeometry(w, 0.16, w), new THREE.MeshBasicMaterial({ color: 0xfde047, wireframe: true }));
+        ring.position.y = y;
+        hillGrp.add(ring);
+      }
+      // Mahkota atas menara + lampu puncak
+      const topCap = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 1.1), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+      topCap.position.y = 18.0;
+      hillGrp.add(topCap);
+      grp.add(hillGrp);
+
+      // Menara kaca moden Miri Times Square di sebelah kiri
+      const mts = new THREE.Mesh(
+        new THREE.BoxGeometry(7.2, 13.5, 7.2),
+        new THREE.MeshBasicMaterial({ map: nightWinTex2 })
+      );
+      mts.position.set(-12.2, 6.75, -2);
+      grp.add(mts);
+
+      return grp;
+    }
+
+    function buildPustakaMiri() {
+      const grp = new THREE.Group();
+
+      // Gerbang hijau-emas Pustaka Miri
+      const arch = new THREE.Mesh(
+        new THREE.TorusGeometry(6.3, 0.24, 10, 32, Math.PI),
+        new THREE.MeshBasicMaterial({ color: 0x10b981 })
+      );
+      arch.position.set(0, 3.6, 0);
+      grp.add(arch);
+      const banner = makeLandmarkBanner("PUSTAKA NEGERI SARAWAK, MIRI", "Perpustakaan Ikonik & Taman Tasik Miri", "#34d399");
+      banner.position.set(0, 11.4, 0);
+      grp.add(banner);
+
+      // Bangunan Pustaka Miri (kubah bertingkat + fasad kaca + tasik bercahaya di kiri)
+      const lib = new THREE.Group();
+      lib.position.set(-12.8, 0, -4);
+
+      const lake = new THREE.Mesh(
+        new THREE.CircleGeometry(7.2, 24),
+        new THREE.MeshBasicMaterial({ color: 0x0e7490, transparent: true, opacity: 0.72 })
+      );
+      lake.rotation.x = -Math.PI / 2;
+      lake.position.set(1.2, 0.08, 2.5);
+      lib.add(lake);
+
+      const podium = new THREE.Mesh(
+        new THREE.CylinderGeometry(5.6, 6.2, 1.6, 24),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 })
+      );
+      podium.position.y = 0.8;
+      lib.add(podium);
+
+      const glassWall = new THREE.Mesh(
+        new THREE.CylinderGeometry(4.8, 4.8, 4.4, 24),
+        new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.55, roughness: 0.2 })
+      );
+      glassWall.position.y = 3.8;
+      lib.add(glassWall);
+
+      // Bumbung bertingkat gaya seni bina Sarawak moden
+      const roof1 = new THREE.Mesh(
+        new THREE.ConeGeometry(6.2, 2.6, 16),
+        new THREE.MeshStandardMaterial({ color: 0x059669, emissive: 0x047857, emissiveIntensity: 0.4 })
+      );
+      roof1.position.y = 7.2;
+      lib.add(roof1);
+
+      const roof2 = new THREE.Mesh(
+        new THREE.ConeGeometry(3.5, 2.2, 16),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xca8a04, emissiveIntensity: 0.45 })
+      );
+      roof2.position.y = 9.2;
+      lib.add(roof2);
+
+      const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.24, 2.2, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+      spire.position.y = 11.2;
+      lib.add(spire);
+
+      // Tiang putih mengelilingi fasad kaca
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 4.6, 8), new THREE.MeshBasicMaterial({ color: 0xe2e8f0 }));
+        col.position.set(Math.cos(a) * 5.0, 3.8, Math.sin(a) * 5.0);
+        lib.add(col);
+      }
+
+      grp.add(lib);
+      return grp;
+    }
+
+    function buildGuaNiah() {
+      const grp = new THREE.Group();
+
+      const rockMat = new THREE.MeshStandardMaterial({ color: 0x292524, emissive: 0x1c1917, roughness: 0.92 });
+      const glowMossMat = new THREE.MeshStandardMaterial({ color: 0x15803d, emissive: 0x166534, emissiveIntensity: 0.35, roughness: 0.85 });
+      const warmRockMat = new THREE.MeshStandardMaterial({ color: 0x44403c, emissive: 0x78350f, emissiveIntensity: 0.28, roughness: 0.88 });
+
+      // Tebing batu kapur tinggi Gua Niah di kiri & kanan
+      [-1, 1].forEach(side => {
+        const cliff1 = new THREE.Mesh(new THREE.DodecahedronGeometry(6.8, 1), rockMat);
+        cliff1.scale.set(0.95, 2.2, 1.35);
+        cliff1.position.set(side * 10.2, 7.2, 0);
+        grp.add(cliff1);
+
+        const cliff2 = new THREE.Mesh(new THREE.DodecahedronGeometry(5.2, 1), warmRockMat);
+        cliff2.scale.set(1.1, 1.6, 1.1);
+        cliff2.position.set(side * 8.4, 12.2, -3.5);
+        grp.add(cliff2);
+
+        // Rimba hijau di atas batu kapur
+        const canopy = new THREE.Mesh(new THREE.DodecahedronGeometry(4.2, 1), glowMossMat);
+        canopy.position.set(side * 9.5, 16.5, -1);
+        grp.add(canopy);
+      });
+
+      // Gerbang Besar Gua Niah (Great Cave) merentasi jalan raya!
+      const caveArch = new THREE.Mesh(new THREE.TorusGeometry(7.8, 2.35, 9, 20, Math.PI), rockMat);
+      caveArch.scale.set(1.05, 1.12, 1.4);
+      caveArch.position.set(0, 6.2, 0);
+      grp.add(caveArch);
+
+      // Cahaya hangat obor/lampu pelancong di dalam mulut gua
+      const innerGlow = new THREE.Mesh(
+        new THREE.TorusGeometry(6.5, 0.16, 8, 28, Math.PI),
+        new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+      );
+      innerGlow.position.set(0, 4.4, 1.8);
+      grp.add(innerGlow);
+
+      // Stalaktit bergantungan di bumbung gua
+      [-3.5, -1.5, 0.8, 3.2].forEach((sx, idx) => {
+        const st = new THREE.Mesh(new THREE.ConeGeometry(0.45, 2.3 + (idx % 2) * 0.7, 6), warmRockMat);
+        st.rotation.x = Math.PI;
+        st.position.set(sx, 11.4, 0.8);
+        grp.add(st);
+      });
+
+      const banner = makeLandmarkBanner("TAMAN NEGARA GUA NIAH", "Tapak Warisan Dunia UNESCO · Miri, Sarawak", "#facc15");
+      banner.position.set(0, 15.8, 2.2);
+      grp.add(banner);
+
+      return grp;
+    }
+
+    function spawnLandmark(zoneId, z) {
+      let mesh = null;
+      if (zoneId === 0) mesh = buildCocoCabanaSeahorse();
+      else if (zoneId === 1) mesh = buildGrandOldLadyAndCityFan();
+      else if (zoneId === 2) mesh = buildPustakaMiri();
+      else if (zoneId === 3) mesh = buildGuaNiah();
+      if (!mesh) return;
+      mesh.position.set(0, 0, z);
+      scene.add(mesh);
+      landmarkObjects.push(mesh);
     }
 
     // =====================================================================
-    // MODEL 3D MAKANAN + PENANDA JELAS (TAPAK AMARAN MERAH / GELUNG HIJAU)
+    // 7. KENDERAAN NEON (HALANGAN JALAN) & GERBANG KOMBO OKTAGON
+    // =====================================================================
+    const CAR_COLORS = [0x1d4ed8, 0xb91c1c, 0xd97706, 0x6d28d9, 0x0f766e];
+    const carBodyGeo = new THREE.BoxGeometry(2.05, 0.78, 4.4);
+    const carCabinGeo = new THREE.BoxGeometry(1.75, 0.68, 2.15);
+    const carWindGeo = new THREE.BoxGeometry(1.62, 0.52, 0.06);
+    const wheelGeo = new THREE.CylinderGeometry(0.36, 0.36, 0.24, 12);
+    const wheelMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+    const glassMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.72 });
+    const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xff1e56 });
+    const headLightMat = new THREE.MeshBasicMaterial({ color: 0xfef9c3 });
+    const underglowMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.42 });
+
+    function spawnVehicle(lane, z) {
+      const col = CAR_COLORS[(Math.random() * CAR_COLORS.length) | 0];
+      const bodyMat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.32, metalness: 0.35 });
+      const g = new THREE.Group();
+
+      const body = new THREE.Mesh(carBodyGeo, bodyMat);
+      body.position.y = 0.72;
+      const cabin = new THREE.Mesh(carCabinGeo, bodyMat);
+      cabin.position.set(0, 1.38, -0.15);
+      const wsFront = new THREE.Mesh(carWindGeo, glassMat);
+      wsFront.position.set(0, 1.38, 0.94);
+      const wsBack = new THREE.Mesh(carWindGeo, glassMat);
+      wsBack.position.set(0, 1.38, -1.24);
+
+      // Lampu belakang merah neon (menghadap pemain di +Z) & lampu hadapan kuning
+      [-0.68, 0.68].forEach(lx => {
+        const tl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.16, 0.08), tailLightMat);
+        tl.position.set(lx, 0.76, 2.22);
+        const hl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.16, 0.08), headLightMat);
+        hl.position.set(lx, 0.76, -2.22);
+        g.add(tl, hl);
+      });
+
+      // 4 roda
+      [[-1.02, 1.35], [1.02, 1.35], [-1.02, -1.35], [1.02, -1.35]].forEach(([wx, wz]) => {
+        const w = new THREE.Mesh(wheelGeo, wheelMat);
+        w.rotation.z = Math.PI / 2;
+        w.position.set(wx, 0.36, wz);
+        g.add(w);
+      });
+
+      // Cahaya bawah kereta (underglow merah bahaya)
+      const ug = new THREE.Mesh(new THREE.PlaneGeometry(2.35, 4.7), underglowMat);
+      ug.rotation.x = -Math.PI / 2;
+      ug.position.y = 0.06;
+
+      g.add(body, cabin, wsFront, wsBack, ug);
+      g.position.set(LANES[lane], 0, z);
+      scene.add(g);
+      vehicles.push({ g, x: LANES[lane], hit: false, len: 4.5 });
+    }
+
+    // Gerbang Neon Oktagon (lalu untuk +25 bonus & naikkan kombo!)
+    const ringOuterGeo = new THREE.TorusGeometry(1.55, 0.11, 8, 8);
+    const ringInnerGeo = new THREE.TorusGeometry(1.36, 0.05, 8, 8);
+    const ringOuterMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const ringInnerMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+
+    function spawnNeonRing(lane, z) {
+      const g = new THREE.Group();
+      const outer = new THREE.Mesh(ringOuterGeo, ringOuterMat);
+      const inner = new THREE.Mesh(ringInnerGeo, ringInnerMat);
+      g.add(outer, inner);
+      g.position.set(LANES[lane], 1.75, z);
+      scene.add(g);
+      neonRings.push({ g, x: LANES[lane], z, passed: false });
+    }
+
+    // =====================================================================
+    // 8. MODEL 3D MAKANAN (TERANG & JELAS ATAS JALAN NEON MALAM)
     // =====================================================================
     const matCache = {};
     function foodMat(color, shiny) {
       const key = color + (shiny ? 's' : 'm');
       if (!matCache[key]) {
-        // Tambah sedikit emissive supaya warna makanan sentiasa terang dan menonjol
-        const emissive = new THREE.Color(color).multiplyScalar(0.18);
+        const emissive = new THREE.Color(color).multiplyScalar(0.32);
         matCache[key] = shiny
-          ? new THREE.MeshPhongMaterial({ color, emissive, shininess: 110, specular: 0x777777 })
+          ? new THREE.MeshPhongMaterial({ color, emissive, shininess: 120, specular: 0x999999 })
           : new THREE.MeshLambertMaterial({ color, emissive });
       }
       return matCache[key];
@@ -738,68 +1936,47 @@
       return m;
     }
 
-    // Tekstur tapak amaran berjalur merah-kuning untuk makanan proses
     function makeHazardPadTex() {
       const [c, g] = makeCanvas(256, 256);
       g.clearRect(0, 0, 256, 256);
       g.save();
-      g.beginPath();
-      g.arc(128, 128, 120, 0, Math.PI * 2);
-      g.clip();
+      g.beginPath(); g.arc(128, 128, 120, 0, Math.PI * 2); g.clip();
       g.fillStyle = '#e11d48';
       g.fillRect(0, 0, 256, 256);
       g.strokeStyle = '#fde047';
       g.lineWidth = 24;
       for (let i = -256; i < 512; i += 52) {
-        g.beginPath();
-        g.moveTo(i, 0);
-        g.lineTo(i + 256, 256);
-        g.stroke();
+        g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 256, 256); g.stroke();
       }
       g.restore();
-      // Bulatan dalam merah pekat + bingkai putih terang
-      g.beginPath();
-      g.arc(128, 128, 76, 0, Math.PI * 2);
-      g.fillStyle = 'rgba(159, 18, 57, 0.92)';
-      g.fill();
-      g.lineWidth = 10;
-      g.strokeStyle = '#ffffff';
-      g.stroke();
-      // Lingkaran luar merah terang
-      g.beginPath();
-      g.arc(128, 128, 118, 0, Math.PI * 2);
-      g.lineWidth = 12;
-      g.strokeStyle = '#ff1e56';
-      g.stroke();
+      g.beginPath(); g.arc(128, 128, 76, 0, Math.PI * 2);
+      g.fillStyle = 'rgba(159, 18, 57, 0.94)'; g.fill();
+      g.lineWidth = 10; g.strokeStyle = '#ffffff'; g.stroke();
+      g.beginPath(); g.arc(128, 128, 118, 0, Math.PI * 2);
+      g.lineWidth = 12; g.strokeStyle = '#ff1e56'; g.stroke();
       return canvasTex(c);
     }
 
-    // Tekstur tapak hijau cerah untuk buah & sayur
     function makeHealthyPadTex() {
       const [c, g] = makeCanvas(256, 256);
       g.clearRect(0, 0, 256, 256);
-      const grad = g.createRadialGradient(128, 128, 30, 128, 128, 120);
-      grad.addColorStop(0, 'rgba(16, 185, 129, 0.55)');
+      const grad = g.createRadialGradient(128, 128, 25, 128, 128, 120);
+      grad.addColorStop(0, 'rgba(16, 185, 129, 0.65)');
       grad.addColorStop(0.75, 'rgba(52, 211, 153, 0.35)');
       grad.addColorStop(1, 'rgba(52, 211, 153, 0)');
       g.fillStyle = grad;
       g.beginPath(); g.arc(128, 128, 120, 0, Math.PI * 2); g.fill();
-      g.beginPath();
-      g.arc(128, 128, 98, 0, Math.PI * 2);
-      g.lineWidth = 12;
-      g.strokeStyle = '#34d399';
-      g.stroke();
+      g.beginPath(); g.arc(128, 128, 98, 0, Math.PI * 2);
+      g.lineWidth = 14; g.strokeStyle = '#34d399'; g.stroke();
       return canvasTex(c);
     }
 
     const hazardPadGeo = new THREE.PlaneGeometry(2.35, 2.35);
     const hazardPadMat = new THREE.MeshBasicMaterial({ map: makeHazardPadTex(), transparent: true, depthWrite: false });
-    const healthyPadGeo = new THREE.PlaneGeometry(1.7, 1.7);
+    const healthyPadGeo = new THREE.PlaneGeometry(1.75, 1.75);
     const healthyPadMat = new THREE.MeshBasicMaterial({ map: makeHealthyPadTex(), transparent: true, depthWrite: false });
-
-    // Gelung amaran menegak di sekeliling makanan proses supaya menonjol dari jauh
-    const dangerHaloGeo = new THREE.TorusGeometry(1.02, 0.085, 10, 32);
-    const dangerHaloMat = new THREE.MeshBasicMaterial({ color: 0xff2a55, transparent: true, opacity: 0.92 });
+    const dangerHaloGeo = new THREE.TorusGeometry(1.04, 0.085, 10, 32);
+    const dangerHaloMat = new THREE.MeshBasicMaterial({ color: 0xff2a55, transparent: true, opacity: 0.94 });
     const hazardBarGeo = new THREE.BoxGeometry(2.15, 0.24, 0.24);
     const hazardBarMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
 
@@ -808,163 +1985,108 @@
         const g = new THREE.Group();
         g.add(part(new THREE.CylinderGeometry(0.12, 0.17, 0.6, 10), foodMat(0x9ccc65), 0, -0.25, 0));
         const floret = new THREE.SphereGeometry(1, 14, 10);
-        const blobs = [
-          [0, 0.22, 0, 0.32], [-0.26, 0.1, 0.04, 0.24], [0.26, 0.1, 0.04, 0.24],
-          [0, 0.12, 0.22, 0.24], [0, 0.12, -0.2, 0.24], [-0.15, 0.36, 0.12, 0.2],
-          [0.16, 0.34, -0.1, 0.2], [0.14, 0.3, 0.16, 0.18], [-0.14, 0.3, -0.14, 0.18]
-        ];
-        blobs.forEach(([x, y, z, r], i) => {
-          const s = part(floret, foodMat(i % 2 ? 0x2e7d32 : 0x43a047), x, y, z);
+        [[0, 0.22, 0, 0.32], [-0.26, 0.1, 0.04, 0.24], [0.26, 0.1, 0.04, 0.24],
+         [0, 0.12, 0.22, 0.24], [0, 0.12, -0.2, 0.24], [-0.15, 0.36, 0.12, 0.2],
+         [0.16, 0.34, -0.1, 0.2], [0.14, 0.3, 0.16, 0.18], [-0.14, 0.3, -0.14, 0.18]].forEach(([x, y, z, r], i) => {
+          const s = part(floret, foodMat(i % 2 ? 0x22c55e : 0x4ade80), x, y, z);
           s.scale.setScalar(r);
           g.add(s);
         });
         return g;
       },
-
       lobak() {
         const g = new THREE.Group();
         const body = part(new THREE.ConeGeometry(0.24, 1.0, 14), foodMat(0xf97316, true), 0, -0.05, 0);
         body.rotation.x = Math.PI;
         g.add(body);
-        const ringGeo = new THREE.TorusGeometry(1, 0.08, 6, 16);
-        [0.2, -0.05, -0.28].forEach((y, i) => {
-          const r = part(ringGeo, foodMat(0xea580c), 0, y, 0);
-          r.rotation.x = Math.PI / 2;
-          r.scale.setScalar(0.2 - i * 0.05);
-          g.add(r);
-        });
-        const leafGeo = new THREE.ConeGeometry(0.06, 0.5, 6);
+        const leafGeo = new THREE.ConeGeometry(0.065, 0.52, 6);
         [-0.35, 0, 0.35].forEach(a => {
-          const l = part(leafGeo, foodMat(0x16a34a), Math.sin(a) * 0.12, 0.68, 0);
+          const l = part(leafGeo, foodMat(0x22c55e), Math.sin(a) * 0.12, 0.68, 0);
           l.rotation.z = -a;
           g.add(l);
         });
         return g;
       },
-
       epal() {
         const g = new THREE.Group();
-        const apple = part(new THREE.SphereGeometry(0.45, 24, 18), foodMat(0xe53935, true));
+        const apple = part(new THREE.SphereGeometry(0.45, 22, 16), foodMat(0xef4444, true));
         apple.scale.set(1, 0.92, 1);
         g.add(apple);
-        g.add(part(new THREE.CylinderGeometry(0.03, 0.035, 0.25, 6), foodMat(0x6d4c41), 0, 0.48, 0));
-        const leaf = part(new THREE.SphereGeometry(1, 10, 8), foodMat(0x43a047), 0.14, 0.5, 0);
-        leaf.scale.set(0.17, 0.05, 0.09);
-        leaf.rotation.z = -0.5;
+        g.add(part(new THREE.CylinderGeometry(0.03, 0.035, 0.25, 6), foodMat(0x78350f), 0, 0.48, 0));
+        const leaf = part(new THREE.SphereGeometry(1, 10, 8), foodMat(0x4ade80), 0.14, 0.5, 0);
+        leaf.scale.set(0.17, 0.05, 0.09); leaf.rotation.z = -0.5;
         g.add(leaf);
         return g;
       },
-
       pisang() {
         const g = new THREE.Group();
         const start = Math.PI * 1.075, arc = Math.PI * 0.85;
-        const banana = part(new THREE.TorusGeometry(0.5, 0.13, 12, 28, arc), foodMat(0xfdd835, true), 0, 0.3, 0);
+        const banana = part(new THREE.TorusGeometry(0.5, 0.13, 12, 26, arc), foodMat(0xfde047, true), 0, 0.3, 0);
         banana.rotation.z = start;
         g.add(banana);
         const tipGeo = new THREE.SphereGeometry(0.1, 8, 6);
-        [start, start + arc].forEach(a => {
-          g.add(part(tipGeo, foodMat(0x5d4037), Math.cos(a) * 0.5, Math.sin(a) * 0.5 + 0.3, 0));
-        });
+        [start, start + arc].forEach(a => g.add(part(tipGeo, foodMat(0x5d4037), Math.cos(a) * 0.5, Math.sin(a) * 0.5 + 0.3, 0)));
         return g;
       },
-
       tembikai() {
         const g = new THREE.Group();
         const slice = new THREE.Group();
-        const half = (r, h, color) =>
-          new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 28, 1, false, -Math.PI / 2, Math.PI), foodMat(color));
-        slice.add(half(0.66, 0.2, 0x2e7d32));
+        const half = (r, h, color) => new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24, 1, false, -Math.PI / 2, Math.PI), foodMat(color));
+        slice.add(half(0.66, 0.2, 0x22c55e));
         slice.add(half(0.6, 0.23, 0xf1f8e9));
-        slice.add(half(0.55, 0.26, 0xef4444));
-        slice.rotation.x = Math.PI / 2;
-        slice.position.y = 0.3;
+        slice.add(half(0.55, 0.26, 0xf43f5e));
+        slice.rotation.x = Math.PI / 2; slice.position.y = 0.3;
         g.add(slice);
-        const seedGeo = new THREE.SphereGeometry(1, 6, 5);
-        [[-0.22, 0.12], [0, 0.0], [0.22, 0.12], [-0.1, -0.12], [0.12, -0.1]].forEach(([x, y]) => {
-          [0.135, -0.135].forEach(z => {
-            const s = part(seedGeo, foodMat(0x111111), x, y, z);
-            s.scale.set(0.035, 0.055, 0.015);
-            g.add(s);
-          });
-        });
         return g;
       },
-
       airgas() {
         const g = new THREE.Group();
-        g.add(part(new THREE.CylinderGeometry(0.32, 0.32, 0.9, 24), foodMat(0xef4444, true)));
-        const lid = new THREE.CylinderGeometry(0.29, 0.31, 0.06, 24);
+        g.add(part(new THREE.CylinderGeometry(0.32, 0.32, 0.9, 22), foodMat(0xef4444, true)));
+        const lid = new THREE.CylinderGeometry(0.29, 0.31, 0.06, 22);
         g.add(part(lid, foodMat(0xe2e8f0, true), 0, 0.47, 0));
         g.add(part(lid, foodMat(0xe2e8f0, true), 0, -0.47, 0));
-        const band = part(new THREE.CylinderGeometry(0.325, 0.325, 0.14, 24), foodMat(0xffffff), 0, 0.05, 0);
-        band.rotation.z = 0.22;
-        g.add(band);
-        g.add(part(new THREE.BoxGeometry(0.12, 0.025, 0.18), foodMat(0x94a3b8, true), 0, 0.51, 0.05));
+        const band = part(new THREE.CylinderGeometry(0.325, 0.325, 0.14, 22), foodMat(0xffffff), 0, 0.05, 0);
+        band.rotation.z = 0.22; g.add(band);
         return g;
       },
-
       sosej() {
         const g = new THREE.Group();
-        const s = part(new THREE.CapsuleGeometry(0.22, 0.78, 8, 16), foodMat(0xc2410c, true));
-        s.rotation.z = Math.PI / 2;
-        g.add(s);
+        const s = part(new THREE.CapsuleGeometry(0.22, 0.78, 8, 14), foodMat(0xea580c, true));
+        s.rotation.z = Math.PI / 2; g.add(s);
         const mustardGeo = new THREE.CapsuleGeometry(0.04, 0.22, 4, 8);
         [-0.3, -0.1, 0.1, 0.3].forEach((x, i) => {
           const m = part(mustardGeo, foodMat(0xfde047), x, 0.21, 0);
-          m.rotation.set(Math.PI / 2, 0, i % 2 ? 0.9 : -0.9);
-          g.add(m);
+          m.rotation.set(Math.PI / 2, 0, i % 2 ? 0.9 : -0.9); g.add(m);
         });
         return g;
       },
-
       donat() {
         const g = new THREE.Group();
-        g.add(part(new THREE.TorusGeometry(0.38, 0.19, 16, 32), foodMat(0xe5a94e)));
-        const icing = part(new THREE.TorusGeometry(0.38, 0.195, 16, 32), foodMat(0xf43f5e, true), 0, 0, 0.05);
-        icing.scale.set(1, 1, 0.75);
-        g.add(icing);
-        const sprGeo = new THREE.BoxGeometry(0.095, 0.028, 0.028);
-        const sprColors = [0xffffff, 0x38bdf8, 0xfacc15, 0x22c55e, 0xa855f7];
-        for (let i = 0; i < 18; i++) {
-          const a = (i / 18) * Math.PI * 2;
-          const r = 0.38 + (i % 3 - 1) * 0.08;
-          const s = part(sprGeo, foodMat(sprColors[i % sprColors.length]), Math.cos(a) * r, Math.sin(a) * r, 0.21);
-          s.rotation.z = a * 3;
-          g.add(s);
-        }
+        g.add(part(new THREE.TorusGeometry(0.38, 0.19, 14, 28), foodMat(0xe5a94e)));
+        const icing = part(new THREE.TorusGeometry(0.38, 0.195, 14, 28), foodMat(0xf43f5e, true), 0, 0, 0.05);
+        icing.scale.set(1, 1, 0.75); g.add(icing);
         return g;
       },
-
       kentang() {
         const g = new THREE.Group();
         const box = part(new THREE.CylinderGeometry(0.45, 0.32, 0.62, 4), foodMat(0xdc2626), 0, -0.2, 0);
-        box.rotation.y = Math.PI / 4;
-        g.add(box);
+        box.rotation.y = Math.PI / 4; g.add(box);
         const fryGeo = new THREE.BoxGeometry(0.085, 0.7, 0.085);
-        [[-0.2, -0.08, 0.15], [-0.1, 0.08, -0.1], [0, -0.05, 0.05], [0.1, 0.1, -0.12],
-         [0.2, -0.06, 0.12], [-0.05, 0.12, 0.2], [0.06, -0.1, -0.2], [0.15, 0.04, 0.18]].forEach(([x, z, rz]) => {
+        [[-0.2, -0.08, 0.15], [-0.1, 0.08, -0.1], [0, -0.05, 0.05], [0.1, 0.1, -0.12], [0.2, -0.06, 0.12]].forEach(([x, z, rz]) => {
           const f = part(fryGeo, foodMat(0xfde047), x, 0.24, z);
-          f.rotation.z = rz;
-          g.add(f);
+          f.rotation.z = rz; g.add(f);
         });
         return g;
       },
-
       lolipop() {
         const g = new THREE.Group();
         g.add(part(new THREE.CylinderGeometry(0.04, 0.04, 0.78, 8), foodMat(0xffffff), 0, -0.3, 0));
-        const candy = part(new THREE.SphereGeometry(0.42, 24, 18), foodMat(0xc026d3, true), 0, 0.26, 0);
-        candy.scale.set(1, 1, 0.45);
-        g.add(candy);
-        [0.22, 0.11].forEach(r => {
-          const swirlGeo = new THREE.TorusGeometry(r, 0.038, 8, 24);
-          [0.18, -0.18].forEach(z => g.add(part(swirlGeo, foodMat(0xffffff), 0, 0.26, z)));
-        });
+        const candy = part(new THREE.SphereGeometry(0.42, 22, 16), foodMat(0xd946ef, true), 0, 0.26, 0);
+        candy.scale.set(1, 1, 0.45); g.add(candy);
         return g;
       }
     };
 
-    // Label lebih besar & kontras tinggi (✓ hijau untuk sihat, ✕ merah-kuning untuk proses)
     function makeTagMaterial(item) {
       const [c, g] = makeCanvas(320, 76);
       const labelText = (item.isHealthy ? '✓ ' : '✕ ') + item.name;
@@ -973,31 +2095,16 @@
       g.font = '900 34px system-ui, sans-serif';
       const tw = Math.min(308, g.measureText(labelText).width + 36);
       const x = 160 - tw / 2, y = 8, w = tw, h = 60, r = 24;
-      g.beginPath();
-      g.moveTo(x + r, y);
-      g.lineTo(x + w - r, y);
-      g.quadraticCurveTo(x + w, y, x + w, y + r);
-      g.lineTo(x + w, y + h - r);
-      g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-      g.lineTo(x + r, y + h);
-      g.quadraticCurveTo(x, y + h, x, y + h - r);
-      g.lineTo(x, y + r);
-      g.quadraticCurveTo(x, y, x + r, y);
-      g.closePath();
-      g.fillStyle = bg;
-      g.fill();
-      g.lineWidth = 5;
-      g.strokeStyle = border;
-      g.stroke();
-      g.fillStyle = '#ffffff';
-      g.textAlign = 'center';
-      g.textBaseline = 'middle';
+      g.beginPath(); g.roundRect(x, y, w, h, r);
+      g.fillStyle = bg; g.fill();
+      g.lineWidth = 5; g.strokeStyle = border; g.stroke();
+      g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillText(labelText, 160, 39, 290);
       return new THREE.SpriteMaterial({ map: canvasTex(c), transparent: true, depthWrite: false });
     }
 
-    const HEALTHY_SCALE = 1.72;
-    const JUNK_SCALE = 1.92;   // Makanan proses dibesarkan sikit supaya senang nampak
+    const HEALTHY_SCALE = 1.65;
+    const JUNK_SCALE = 1.88;
     const JUNK_Y = 1.25;
 
     ITEMS_CATALOG.forEach(it => {
@@ -1014,21 +2121,18 @@
       const obj = new THREE.Group();
       obj.position.set(LANES[lane], 0, z);
 
-      // Tapak penanda di atas landasan
       const groundMarker = new THREE.Group();
-      groundMarker.position.y = 0.18;
+      groundMarker.position.y = 0.09;
       const pad = new THREE.Mesh(isHealthy ? healthyPadGeo : hazardPadGeo, isHealthy ? healthyPadMat : hazardPadMat);
       pad.rotation.x = -Math.PI / 2;
       groundMarker.add(pad);
       if (!isHealthy) {
-        // Palang amaran kuning rendah di hadapan makanan proses
         const bar = new THREE.Mesh(hazardBarGeo, hazardBarMat);
         bar.position.set(0, 0.12, 0.95);
         groundMarker.add(bar);
       }
       obj.add(groundMarker);
 
-      // Kumpulan visual makanan + label
       const visual = new THREE.Group();
       visual.position.y = y;
 
@@ -1058,8 +2162,7 @@
     }
 
     // =====================================================================
-    // 5. WATAK 3D KONSEP PIXAR (VEST OREN, BAJU ANGKASA, SELUAR KARGO,
-    //    JAM TANGAN KIRI, KASUT BIRU-OREN, RAMBUT GELAP TERPACAK)
+    // 9. WATAK 3D KONSEP PIXAR + JEJAK NEON & PERCIKAN API BERLARI
     // =====================================================================
     function makeSpaceShirtTexture() {
       const [c, g] = makeCanvas(256, 256);
@@ -1070,29 +2173,21 @@
         g.beginPath(); g.arc(x, y, 4, 0, Math.PI * 2); g.fill();
       });
       const drawPlanet = (x, y, r, col) => {
-        g.strokeStyle = '#93c5fd';
-        g.lineWidth = 3;
+        g.strokeStyle = '#93c5fd'; g.lineWidth = 3;
         g.beginPath(); g.ellipse(x, y, r * 1.8, r * 0.5, -0.35, 0, Math.PI * 2); g.stroke();
-        g.fillStyle = col;
-        g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+        g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
       };
       drawPlanet(128, 115, 11, '#f97316');
       drawPlanet(70, 110, 8, '#38bdf8');
       drawPlanet(185, 175, 9, '#34d399');
-      g.fillStyle = '#e2e8f0';
-      g.beginPath(); g.ellipse(142, 70, 6, 14, 0.4, 0, Math.PI * 2); g.fill();
-      g.fillStyle = '#ef4444';
-      g.beginPath(); g.arc(147, 60, 5, 0, Math.PI * 2); g.fill();
-      g.fillStyle = '#facc15';
-      g.beginPath(); g.arc(133, 82, 5, 0, Math.PI * 2); g.fill();
       return c;
     }
 
     function makeVestTexture() {
       const [c, g] = makeCanvas(256, 256);
-      g.fillStyle = '#c85024';
+      g.fillStyle = '#dc5a28';
       g.fillRect(0, 0, 256, 256);
-      g.strokeStyle = 'rgba(85, 25, 8, 0.35)';
+      g.strokeStyle = 'rgba(85, 25, 8, 0.38)';
       g.lineWidth = 4;
       g.beginPath();
       g.moveTo(0, 72); g.lineTo(256, 72);
@@ -1100,36 +2195,38 @@
       g.moveTo(86, 72); g.lineTo(86, 232);
       g.moveTo(170, 72); g.lineTo(170, 232);
       g.stroke();
-      g.fillStyle = 'rgba(60, 18, 6, 0.22)';
-      g.fillRect(0, 232, 256, 24);
       return c;
     }
 
     function buildRunner() {
-      const std = (color, roughness = 0.72, extra = {}) =>
-        new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.04, ...extra });
+      const std = (color, roughness = 0.65, extra = {}) =>
+        new THREE.MeshStandardMaterial({
+          color, roughness, metalness: 0.05,
+          emissive: new THREE.Color(color).multiplyScalar(0.18),
+          ...extra
+        });
 
       const M = {
-        skin:        std(0xc88758, 0.62),
-        hair:        std(0x1b1918, 0.78),
-        shirt:       std(0xffffff, 0.8, { map: canvasTex(makeSpaceShirtTexture()) }),
-        sleeve:      std(0x1b3154, 0.8),
-        vest:        std(0xffffff, 0.75, { map: canvasTex(makeVestTexture()), side: THREE.DoubleSide }),
-        vestSolid:   std(0xc85024, 0.75),
-        vestDark:    std(0xa43b16, 0.78),
-        shorts:      std(0x9b7a52, 0.82),
-        shortsDark:  std(0x836440, 0.84),
-        sock:        std(0xf8fafc, 0.8),
-        sockStripe:  std(0x94a3b8, 0.8),
-        shoeBlue:    std(0x2563eb, 0.5),
-        shoeOrange:  std(0xf97316, 0.5),
-        shoeWhite:   std(0xf8fafc, 0.45),
-        watchBand:   std(0x334155, 0.45),
-        watchFace:   std(0x0f172a, 0.2, { metalness: 0.25 }),
-        eyeWhite:    std(0xffffff, 0.2),
-        iris:        std(0x4a2511, 0.15),
-        pupil:       std(0x0b0b0c, 0.1),
-        mouth:       std(0x7c3a21, 0.5)
+        skin:       std(0xd69666, 0.58),
+        hair:       std(0x1f1d1c, 0.72),
+        shirt:      std(0xffffff, 0.75, { map: canvasTex(makeSpaceShirtTexture()), emissive: new THREE.Color(0x1e3a5f) }),
+        sleeve:     std(0x1e3a6d, 0.75),
+        vest:       std(0xffffff, 0.7, { map: canvasTex(makeVestTexture()), side: THREE.DoubleSide, emissive: new THREE.Color(0x521d08) }),
+        vestSolid:  std(0xdc5a28, 0.7),
+        vestDark:   std(0xb24016, 0.75),
+        shorts:     std(0xb08d62, 0.78),
+        shortsDark: std(0x8c6c46, 0.8),
+        sock:       std(0xf8fafc, 0.7),
+        sockStripe: std(0x94a3b8, 0.7),
+        shoeBlue:   std(0x3b82f6, 0.45),
+        shoeOrange: std(0xf97316, 0.45),
+        shoeWhite:  std(0xffffff, 0.4),
+        watchBand:  std(0x334155, 0.45),
+        watchFace:  std(0x38bdf8, 0.2),
+        eyeWhite:   new THREE.MeshBasicMaterial({ color: 0xffffff }),
+        iris:       new THREE.MeshBasicMaterial({ color: 0x4a2511 }),
+        pupil:      new THREE.MeshBasicMaterial({ color: 0x0b0b0c }),
+        mouth:      new THREE.MeshBasicMaterial({ color: 0x7c3a21 })
       };
 
       const mesh = (geo, mat, x = 0, y = 0, z = 0) => {
@@ -1166,23 +2263,19 @@
         const shoulderPad = mesh(new THREE.SphereGeometry(0.15, 14, 12), M.vestSolid, side * 0.23, 1.60, 0);
         shoulderPad.scale.set(1.05, 0.65, 1.25);
         body.add(shoulderPad);
-
         const frontPanel = mesh(new THREE.BoxGeometry(0.16, 0.58, 0.07), M.vestSolid, side * 0.17, 1.35, -0.22);
         frontPanel.rotation.y = side * -0.25;
-        body.add(frontPanel);
-
         const chestPocket = mesh(new THREE.BoxGeometry(0.11, 0.12, 0.045), M.vestDark, side * 0.18, 1.47, -0.25);
         chestPocket.rotation.y = side * -0.25;
         const lowerPocket = mesh(new THREE.BoxGeometry(0.125, 0.16, 0.055), M.vestDark, side * 0.18, 1.18, -0.25);
         lowerPocket.rotation.y = side * -0.25;
-        body.add(chestPocket, lowerPocket);
+        body.add(frontPanel, chestPocket, lowerPocket);
       });
 
       const shortsWaist = mesh(new THREE.CylinderGeometry(0.285, 0.30, 0.26, 20), M.shorts, 0, 0.92, 0);
       shortsWaist.scale.set(1.06, 1, 0.85);
       const waistBand = mesh(new THREE.TorusGeometry(0.275, 0.032, 8, 24), M.shortsDark, 0, 1.03, 0);
-      waistBand.rotation.x = Math.PI / 2;
-      waistBand.scale.set(1.06, 0.85, 1);
+      waistBand.rotation.x = Math.PI / 2; waistBand.scale.set(1.06, 0.85, 1);
       body.add(shortsWaist, waistBand);
 
       const neck = mesh(new THREE.CylinderGeometry(0.095, 0.11, 0.18, 14), M.skin, 0, 1.69, 0);
@@ -1192,62 +2285,42 @@
       headGroup.position.set(0, 2.07, 0);
       body.add(headGroup);
 
-      const cranium = mesh(new THREE.SphereGeometry(0.43, 28, 22), M.skin, 0, 0, 0);
+      const cranium = mesh(new THREE.SphereGeometry(0.43, 24, 18), M.skin, 0, 0, 0);
       cranium.scale.set(0.96, 1.03, 0.95);
       headGroup.add(cranium);
 
-      const earGeo = new THREE.SphereGeometry(0.095, 12, 10);
+      const earGeo = new THREE.SphereGeometry(0.095, 10, 8);
       const earL = mesh(earGeo, M.skin, -0.41, -0.02, 0.02);
       const earR = mesh(earGeo, M.skin,  0.41, -0.02, 0.02);
-      earL.scale.set(0.55, 1.1, 0.85);
-      earR.scale.set(0.55, 1.1, 0.85);
+      earL.scale.set(0.55, 1.1, 0.85); earR.scale.set(0.55, 1.1, 0.85);
       headGroup.add(earL, earR);
 
-      const eyeGeo = new THREE.SphereGeometry(0.095, 16, 12);
-      const irisGeo = new THREE.SphereGeometry(0.056, 14, 10);
-      const pupilGeo = new THREE.SphereGeometry(0.03, 10, 8);
-      const catchGeo = new THREE.SphereGeometry(0.015, 8, 6);
       [-0.155, 0.155].forEach((ex, idx) => {
-        const ew = mesh(eyeGeo, M.eyeWhite, ex, 0.02, -0.365);
+        const ew = mesh(new THREE.SphereGeometry(0.095, 12, 10), M.eyeWhite, ex, 0.02, -0.365);
         ew.scale.set(1.0, 1.12, 0.5);
-        const ir = mesh(irisGeo, M.iris, ex, 0.02, -0.402);
+        const ir = mesh(new THREE.SphereGeometry(0.056, 10, 8), M.iris, ex, 0.02, -0.402);
         ir.scale.set(1, 1.05, 0.45);
-        const pu = mesh(pupilGeo, M.pupil, ex, 0.02, -0.422);
-        const hi = mesh(catchGeo, M.eyeWhite, ex + 0.02, 0.048, -0.43);
+        const pu = mesh(new THREE.SphereGeometry(0.03, 8, 6), M.pupil, ex, 0.02, -0.422);
         const brow = mesh(new THREE.BoxGeometry(0.145, 0.042, 0.045), M.hair, ex, 0.155, -0.385);
         brow.rotation.z = idx === 0 ? 0.12 : -0.12;
-        headGroup.add(ew, ir, pu, hi, brow);
+        headGroup.add(ew, ir, pu, brow);
       });
-      const nose = mesh(new THREE.SphereGeometry(0.055, 12, 10), M.skin, 0, -0.055, -0.415);
-      nose.scale.set(1.05, 0.85, 0.85);
+      const nose = mesh(new THREE.SphereGeometry(0.055, 10, 8), M.skin, 0, -0.055, -0.415);
       const smile = mesh(new THREE.TorusGeometry(0.095, 0.016, 8, 16, Math.PI * 0.72), M.mouth, 0, -0.135, -0.385);
       smile.rotation.z = Math.PI * 1.14;
       headGroup.add(nose, smile);
 
-      const hairCap = mesh(new THREE.SphereGeometry(0.455, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), M.hair, 0, 0.03, 0.01);
+      const hairCap = mesh(new THREE.SphereGeometry(0.455, 22, 12, 0, Math.PI * 2, 0, Math.PI * 0.52), M.hair, 0, 0.03, 0.01);
       hairCap.scale.set(0.98, 1.04, 0.99);
-      const hairBack = mesh(new THREE.SphereGeometry(0.452, 24, 16, -Math.PI * 0.65, Math.PI * 1.3, 0, Math.PI * 0.72), M.hair, 0, 0.01, 0.02);
+      const hairBack = mesh(new THREE.SphereGeometry(0.452, 22, 14, -Math.PI * 0.65, Math.PI * 1.3, 0, Math.PI * 0.72), M.hair, 0, 0.01, 0.02);
       headGroup.add(hairCap, hairBack);
 
-      const tuftGeo = new THREE.ConeGeometry(0.12, 0.34, 10);
-      const hairTufts = [
-        [ 0.00,  0.47, -0.08,  0.45,  0.0,  0.10, 1.15],
-        [-0.18,  0.45, -0.06,  0.35,  0.0,  0.55, 1.05],
-        [ 0.19,  0.44, -0.06,  0.35,  0.0, -0.55, 1.05],
-        [-0.08,  0.44, -0.25, -0.55,  0.0,  0.28, 0.92],
-        [ 0.14,  0.41, -0.24, -0.55,  0.0, -0.38, 0.88],
-        [ 0.00,  0.42,  0.20,  1.05,  0.0,  0.00, 1.15],
-        [-0.22,  0.36,  0.18,  0.90,  0.0,  0.65, 1.00],
-        [ 0.22,  0.36,  0.18,  0.90,  0.0, -0.65, 1.00],
-        [-0.32,  0.24,  0.16,  0.75,  0.0,  1.05, 0.92],
-        [ 0.32,  0.24,  0.16,  0.75,  0.0, -1.05, 0.92],
-        [-0.18,  0.16,  0.36,  1.55,  0.0,  0.42, 0.95],
-        [ 0.18,  0.16,  0.36,  1.55,  0.0, -0.42, 0.95],
-        [ 0.00,  0.02,  0.42,  1.85,  0.0,  0.00, 0.90],
-        [-0.24, -0.04,  0.34,  1.80,  0.0,  0.55, 0.82],
-        [ 0.24, -0.04,  0.34,  1.80,  0.0, -0.55, 0.82]
-      ];
-      hairTufts.forEach(([x, y, z, rx, ry, rz, s]) => {
+      const tuftGeo = new THREE.ConeGeometry(0.12, 0.34, 8);
+      [[ 0.00, 0.47, -0.08, 0.45, 0, 0.10, 1.15], [-0.18, 0.45, -0.06, 0.35, 0, 0.55, 1.05],
+       [ 0.19, 0.44, -0.06, 0.35, 0, -0.55, 1.05], [0.00, 0.42, 0.20, 1.05, 0, 0, 1.15],
+       [-0.22, 0.36, 0.18, 0.90, 0, 0.65, 1.00], [0.22, 0.36, 0.18, 0.90, 0, -0.65, 1.00],
+       [-0.18, 0.16, 0.36, 1.55, 0, 0.42, 0.95], [0.18, 0.16, 0.36, 1.55, 0, -0.42, 0.95],
+       [ 0.00, 0.02, 0.42, 1.85, 0, 0, 0.90]].forEach(([x, y, z, rx, ry, rz, s]) => {
         const t = mesh(tuftGeo, M.hair, x, y, z);
         t.rotation.set(rx, ry, rz);
         t.scale.set(s, s, s * 0.85);
@@ -1257,22 +2330,18 @@
       function makeArm(side) {
         const shoulder = new THREE.Group();
         shoulder.position.set(side * 0.37, 1.54, 0);
-        shoulder.add(mesh(new THREE.CylinderGeometry(0.105, 0.095, 0.23, 14), M.sleeve, 0, -0.10, 0));
+        shoulder.add(mesh(new THREE.CylinderGeometry(0.105, 0.095, 0.23, 12), M.sleeve, 0, -0.10, 0));
         shoulder.add(mesh(capsule(0.068, 0.13), M.skin, 0, -0.25, 0));
-
         const elbow = new THREE.Group();
         elbow.position.y = -0.34;
         elbow.add(mesh(capsule(0.062, 0.18), M.skin, 0, -0.14, 0));
-
         if (side === -1) {
-          elbow.add(mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 14), M.watchBand, 0, -0.23, 0));
+          elbow.add(mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 12), M.watchBand, 0, -0.23, 0));
           elbow.add(mesh(new THREE.BoxGeometry(0.045, 0.055, 0.072), M.watchFace, -0.058, -0.23, 0));
         }
-
-        const hand = mesh(new THREE.SphereGeometry(0.082, 14, 12), M.skin, 0, -0.31, 0);
+        const hand = mesh(new THREE.SphereGeometry(0.082, 12, 10), M.skin, 0, -0.31, 0);
         hand.scale.set(0.88, 1.08, 0.82);
         elbow.add(hand);
-
         shoulder.add(elbow);
         body.add(shoulder);
         return { shoulder, elbow };
@@ -1281,29 +2350,20 @@
       function makeLeg(side) {
         const hip = new THREE.Group();
         hip.position.set(side * 0.165, 0.88, 0);
-
-        hip.add(mesh(new THREE.CylinderGeometry(0.152, 0.14, 0.34, 16), M.shorts, 0, -0.17, 0));
+        hip.add(mesh(new THREE.CylinderGeometry(0.152, 0.14, 0.34, 14), M.shorts, 0, -0.17, 0));
         hip.add(mesh(new THREE.BoxGeometry(0.058, 0.155, 0.145), M.shortsDark, side * 0.14, -0.18, 0.01));
-        hip.add(mesh(new THREE.BoxGeometry(0.066, 0.042, 0.152), M.shorts, side * 0.143, -0.11, 0.01));
-        hip.add(mesh(new THREE.SphereGeometry(0.088, 12, 10), M.skin, 0, -0.35, 0));
-
+        hip.add(mesh(new THREE.SphereGeometry(0.088, 10, 8), M.skin, 0, -0.35, 0));
         const knee = new THREE.Group();
         knee.position.y = -0.38;
-
-        knee.add(mesh(new THREE.CylinderGeometry(0.086, 0.08, 0.19, 12), M.skin, 0, -0.095, 0));
-        knee.add(mesh(new THREE.CylinderGeometry(0.09, 0.086, 0.19, 14), M.sock, 0, -0.275, 0));
-        knee.add(mesh(new THREE.CylinderGeometry(0.093, 0.093, 0.026, 14), M.sockStripe, 0, -0.205, 0));
-
+        knee.add(mesh(new THREE.CylinderGeometry(0.086, 0.08, 0.19, 10), M.skin, 0, -0.095, 0));
+        knee.add(mesh(new THREE.CylinderGeometry(0.09, 0.086, 0.19, 12), M.sock, 0, -0.275, 0));
+        knee.add(mesh(new THREE.CylinderGeometry(0.093, 0.093, 0.026, 12), M.sockStripe, 0, -0.205, 0));
         const sole = mesh(new THREE.BoxGeometry(0.215, 0.076, 0.42), M.shoeWhite, 0, -0.462, -0.055);
-        const upper = mesh(new THREE.SphereGeometry(0.125, 16, 12), M.shoeBlue, 0, -0.385, -0.06);
+        const upper = mesh(new THREE.SphereGeometry(0.125, 14, 10), M.shoeBlue, 0, -0.385, -0.06);
         upper.scale.set(0.88, 0.72, 1.56);
         const heelOrange = mesh(new THREE.BoxGeometry(0.205, 0.115, 0.12), M.shoeOrange, 0, -0.39, 0.095);
         const tongueOrange = mesh(new THREE.BoxGeometry(0.11, 0.07, 0.12), M.shoeOrange, 0, -0.33, -0.06);
-        const toeTrim = mesh(new THREE.BoxGeometry(0.175, 0.05, 0.09), M.shoeOrange, 0, -0.415, -0.215);
-        const lace1 = mesh(new THREE.BoxGeometry(0.12, 0.02, 0.03), M.shoeWhite, 0, -0.325, -0.10);
-        const lace2 = mesh(new THREE.BoxGeometry(0.12, 0.02, 0.03), M.shoeWhite, 0, -0.34, -0.15);
-        knee.add(sole, upper, heelOrange, tongueOrange, toeTrim, lace1, lace2);
-
+        knee.add(sole, upper, heelOrange, tongueOrange);
         hip.add(knee);
         body.add(hip);
         return { hip, knee };
@@ -1313,7 +2373,7 @@
       const legL = makeLeg(-1), legR = makeLeg(1);
 
       scene.add(root);
-      return { root, body, headGroup, armL, armR, legL, legR, glbModel: null, glbMixer: null, glbActions: {} };
+      return { root, body, headGroup, armL, armR, legL, legR, glbModel: null, glbMixer: null };
     }
 
     const runner = buildRunner();
@@ -1335,58 +2395,110 @@
           runner.glbModel = model;
           if (gltf.animations && gltf.animations.length > 0) {
             runner.glbMixer = new THREE.AnimationMixer(model);
-            gltf.animations.forEach(clip => {
-              runner.glbActions[clip.name.toLowerCase()] = runner.glbMixer.clipAction(clip);
-            });
-            const defaultClip = Object.values(runner.glbActions)[0];
-            if (defaultClip) defaultClip.play();
+            runner.glbMixer.clipAction(gltf.animations[0]).play();
           }
         }, undefined, (err) => console.warn("Gagal memuatkan CUSTOM_GLB_URL:", err));
       });
     }
 
+    // Jejak tenaga neon & percikan gaya Neon Scramble di belakang pelari
+    const trailMat = new THREE.MeshBasicMaterial({ color: 0xfb923c, transparent: true, opacity: 0.72, side: THREE.DoubleSide });
+    const trailMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 6.2), trailMat);
+    trailMesh.rotation.x = -Math.PI / 2;
+    trailMesh.position.set(0, 0.12, 3.3);
+    scene.add(trailMesh);
+
+    const sparks = [];
+    const sparkGeo = new THREE.BoxGeometry(0.08, 0.08, 0.55);
+    const sparkMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    for (let i = 0; i < 16; i++) {
+      const sp = new THREE.Mesh(sparkGeo, sparkMat);
+      sp.visible = false;
+      scene.add(sp);
+      sparks.push({ m: sp, vx: 0, vy: 0, vz: 0, life: 0 });
+    }
+    let sparkIdx = 0;
+
+    function emitSpark() {
+      const s = sparks[sparkIdx++ % sparks.length];
+      s.m.position.set(player.x + (Math.random() - 0.5) * 0.55, Math.max(0.15, player.y + 0.25), 0.35);
+      s.vx = (Math.random() - 0.5) * 2.2;
+      s.vy = 0.6 + Math.random() * 1.4;
+      s.vz = 9 + Math.random() * 6;
+      s.life = 0.32;
+      s.m.visible = true;
+    }
+
     const shadowBlob = new THREE.Mesh(
-      new THREE.CircleGeometry(0.6, 24),
-      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3, depthWrite: false })
+      new THREE.CircleGeometry(0.65, 24),
+      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.36, depthWrite: false })
     );
     shadowBlob.rotation.x = -Math.PI / 2;
-    shadowBlob.position.y = 0.2;
+    shadowBlob.position.y = 0.08;
     scene.add(shadowBlob);
 
     let runAmt = 0;
     function updateRunner(dt, t) {
       const targetX = LANES[currentLane];
       player.x += (targetX - player.x) * Math.min(1, dt * 15);
-      player.vy -= GRAVITY * dt;
-      player.y += player.vy * dt;
-      if (player.y <= 0) {
-        player.y = 0;
+
+      if (skyDropTime > 0) {
+        skyDropTime = Math.max(0, skyDropTime - dt);
+        const p = 1 - skyDropTime / SKY_DROP_DURATION;
+        // Jatuhan dramatik dari langit ke jalan Coco Cabana
+        player.y = 24 * Math.pow(1 - p, 2.2);
         player.vy = 0;
-        // Laksanakan lompatan tertangguh (jump buffer) serta-merta bila jejak tanah
-        if (player.jumpBuffer > 0) {
-          player.jumpBuffer = 0;
-          player.vy = JUMP_V;
-          player.roll = 0;
+        if (skyDropTime === 0) {
+          shake = 0.32;
           playSound('jump');
         }
+      } else {
+        player.vy -= GRAVITY * dt;
+        player.y += player.vy * dt;
+        if (player.y <= 0) {
+          player.y = 0;
+          player.vy = 0;
+          if (player.jumpBuffer > 0) {
+            player.jumpBuffer = 0;
+            player.vy = JUMP_V;
+            player.roll = 0;
+            playSound('jump');
+          }
+        }
       }
+
       if (player.jumpBuffer > 0) player.jumpBuffer -= dt;
       if (player.roll > 0) player.roll -= dt;
       if (player.inv > 0) player.inv -= dt;
+      if (player.boostTimer > 0) player.boostTimer -= dt;
 
-      const grounded = player.y <= 0.001;
-      runAmt += ((isRunning ? Math.min(1, speed / 9) : 0) - runAmt) * Math.min(1, dt * 7);
+      const grounded = player.y <= 0.001 && skyDropTime <= 0;
+      runAmt += ((isRunning && skyDropTime <= 0 ? Math.min(1, speed / 10) : 0) - runAmt) * Math.min(1, dt * 7);
       player.phase += dt * speed * 0.62;
-
-      // Pusing menghadap kamera bila menu/tamat, pusing depan bila mula lari
-      const targetFace = isRunning ? 0 : Math.PI;
-      player.facingY += (targetFace - player.facingY) * Math.min(1, dt * 8);
 
       const R = runner;
       R.root.position.set(player.x, player.y, 0);
-      R.root.rotation.y = player.facingY;
-      R.root.rotation.z = isRunning ? (player.x - targetX) * 0.12 : 0;
+      R.root.rotation.z = (isRunning && skyDropTime <= 0) ? (player.x - targetX) * 0.13 : 0;
       R.root.visible = player.inv > 0 ? Math.floor(t * 14) % 2 === 0 : true;
+
+      runnerLight.position.set(player.x, player.y + 3.2, 2.2);
+
+      // Kemas kini jejak neon & percikan
+      trailMesh.visible = isRunning;
+      trailMesh.position.set(player.x, Math.max(0.12, player.y + 0.12), 3.3);
+      trailMat.color.setHex(player.boostTimer > 0 ? 0x34d399 : 0xfb923c);
+      trailMat.opacity = isRunning ? (0.55 + Math.sin(t * 18) * 0.18) : 0;
+
+      if (isRunning && Math.random() < 0.65) emitSpark();
+      sparks.forEach(s => {
+        if (s.life > 0) {
+          s.life -= dt;
+          s.m.position.x += s.vx * dt;
+          s.m.position.y += s.vy * dt;
+          s.m.position.z += s.vz * dt;
+          if (s.life <= 0) s.m.visible = false;
+        }
+      });
 
       if (R.glbModel) {
         if (R.glbMixer) R.glbMixer.update(dt * (grounded ? Math.max(0.5, speed / 12) : 0.7));
@@ -1397,20 +2509,15 @@
         const ease = (o, axis, target) => { o.rotation[axis] += (target - o.rotation[axis]) * k; };
         const b = R.body;
 
-        if (!isRunning) {
-          // Gaya menu: berdiri menghadap kamera sambil melambai mesra
+        if (skyDropTime > 0) {
+          // Pose Sky Drop (tangan & kaki terbuka terjun udara)
           b.scale.y += (1 - b.scale.y) * k;
-          ease(b, 'x', 0); ease(b, 'y', 0);
-          ease(R.headGroup, 'x', -0.04);
-          ease(R.headGroup, 'y', Math.sin(t * 1.6) * 0.12);
-          ease(R.legL.hip, 'x', 0); ease(R.legR.hip, 'x', 0);
-          ease(R.legL.knee, 'x', -0.04); ease(R.legR.knee, 'x', -0.04);
-          ease(R.armL.shoulder, 'x', 0.08); ease(R.armL.elbow, 'x', 0.2);
-          ease(R.armL.shoulder, 'z', -0.18);
-          ease(R.armR.shoulder, 'x', 0.15);
-          ease(R.armR.shoulder, 'z', 2.45 + Math.sin(t * 7) * 0.25);
-          ease(R.armR.elbow, 'x', 0.2);
-          b.position.y = Math.sin(t * 2.4) * 0.02;
+          ease(b, 'x', 0.35); ease(b, 'y', 0);
+          ease(R.armL.shoulder, 'z', -1.25); ease(R.armR.shoulder, 'z', 1.25);
+          ease(R.armL.shoulder, 'x', -0.2); ease(R.armR.shoulder, 'x', -0.2);
+          ease(R.legL.hip, 'x', -0.25); ease(R.legR.hip, 'x', 0.25);
+          ease(R.legL.knee, 'x', -0.5); ease(R.legR.knee, 'x', -0.5);
+          b.position.y = 0;
         } else if (player.roll > 0) {
           b.scale.y += (0.6 - b.scale.y) * Math.min(1, dt * 20);
           ease(b, 'x', -0.45); ease(b, 'y', 0);
@@ -1434,16 +2541,16 @@
         } else {
           b.scale.y += (1 - b.scale.y) * Math.min(1, dt * 14);
           const s = Math.sin(player.phase), c = Math.cos(player.phase);
-          ease(b, 'x', -0.16 * runAmt);
+          ease(b, 'x', -0.18 * runAmt);
           ease(b, 'y', s * 0.08 * runAmt);
           ease(R.headGroup, 'x', 0.08 * runAmt);
           ease(R.headGroup, 'y', -s * 0.05 * runAmt);
-          ease(R.legL.hip, 'x', s * 0.85 * runAmt);
-          ease(R.legR.hip, 'x', -s * 0.85 * runAmt);
-          ease(R.legL.knee, 'x', -Math.max(0, c) * 1.3 * runAmt - 0.05);
-          ease(R.legR.knee, 'x', -Math.max(0, -c) * 1.3 * runAmt - 0.05);
-          ease(R.armL.shoulder, 'x', -s * 0.82 * runAmt);
-          ease(R.armR.shoulder, 'x', s * 0.82 * runAmt);
+          ease(R.legL.hip, 'x', s * 0.88 * runAmt);
+          ease(R.legR.hip, 'x', -s * 0.88 * runAmt);
+          ease(R.legL.knee, 'x', -Math.max(0, c) * 1.32 * runAmt - 0.05);
+          ease(R.legR.knee, 'x', -Math.max(0, -c) * 1.32 * runAmt - 0.05);
+          ease(R.armL.shoulder, 'x', -s * 0.85 * runAmt);
+          ease(R.armR.shoulder, 'x', s * 0.85 * runAmt);
           ease(R.armL.elbow, 'x', 0.25 + 1.05 * runAmt);
           ease(R.armR.elbow, 'x', 0.25 + 1.05 * runAmt);
           ease(R.armL.shoulder, 'z', -0.14); ease(R.armR.shoulder, 'z', 0.14);
@@ -1452,12 +2559,33 @@
       }
 
       shadowBlob.position.x = player.x;
-      const sc = Math.max(0.45, 1 - player.y * 0.18);
+      const sc = Math.max(0.35, 1 - player.y * 0.05);
       shadowBlob.scale.set(sc, sc, sc);
+
+      // Kemas kini lencana status HUD
+      if (skyDropTime > 0) {
+        stateBadgeEl.textContent = "SKY DROP";
+        stateBadgeEl.className = "";
+      } else if (player.inv > 1.0) {
+        stateBadgeEl.textContent = "TERLANGGAR";
+        stateBadgeEl.className = "danger";
+      } else if (player.boostTimer > 0) {
+        stateBadgeEl.textContent = "BOOST SIHAT";
+        stateBadgeEl.className = "boost";
+      } else if (player.roll > 0) {
+        stateBadgeEl.textContent = "GULING";
+        stateBadgeEl.className = "";
+      } else if (!grounded) {
+        stateBadgeEl.textContent = "LOMPAT";
+        stateBadgeEl.className = "";
+      } else {
+        stateBadgeEl.textContent = "SPRINT";
+        stateBadgeEl.className = "";
+      }
     }
 
     // =====================================================================
-    // 6. KAWALAN: LORONG, LOMPAT (+ BUFFER), GULING
+    // 10. KAWALAN: LORONG, LOMPAT (+ BUFFER), GULING, AUTO-PILOT
     // =====================================================================
     function setPlayerLane(laneIndex) {
       if (laneIndex < 0 || laneIndex > 2) return;
@@ -1466,18 +2594,19 @@
     }
 
     function doJump() {
+      if (skyDropTime > 0) return;
       if (player.y <= 0.001) {
         player.vy = JUMP_V;
         player.roll = 0;
         player.jumpBuffer = 0;
         playSound('jump');
       } else if (player.vy < 0) {
-        // Simpan hasrat lompat supaya terus melompat bila mendarat
         player.jumpBuffer = 0.22;
       }
     }
 
     function doRoll() {
+      if (skyDropTime > 0) return;
       if (player.y > 0.001) player.vy = -26;
       player.roll = 0.6;
     }
@@ -1488,7 +2617,18 @@
       setTimeout(() => { gestureTagEl.style.opacity = '0'; }, 450);
     }
 
+    function showToast(text, type = "good") {
+      const el = document.createElement('div');
+      el.className = `neon-toast ${type}`;
+      const dotCol = type === 'good' ? '#34d399' : (type === 'bad' ? '#fb7185' : '#facc15');
+      el.innerHTML = `<span class="toast-dot" style="background:${dotCol};box-shadow:0 0 8px ${dotCol};"></span><span>${text}</span>`;
+      toastStackEl.appendChild(el);
+      while (toastStackEl.children.length > 2) toastStackEl.firstChild.remove();
+      setTimeout(() => el.remove(), 1350);
+    }
+
     window.addEventListener('keydown', (e) => {
+      if (!isRunning || autoPilot) return;
       const k = e.key;
       if (k === 'ArrowLeft' || k === 'a' || k === 'A') { setPlayerLane(currentLane - 1); e.preventDefault(); }
       else if (k === 'ArrowRight' || k === 'd' || k === 'D') { setPlayerLane(currentLane + 1); e.preventDefault(); }
@@ -1502,7 +2642,7 @@
       touchStart = { x: t.clientX, y: t.clientY };
     }, { passive: true });
     canvas.addEventListener('touchend', (e) => {
-      if (!touchStart) return;
+      if (!touchStart || !isRunning || autoPilot) return;
       const t = e.changedTouches[0];
       const dx = t.clientX - touchStart.x;
       const dy = t.clientY - touchStart.y;
@@ -1520,10 +2660,10 @@
       const btn = document.getElementById('btn-track-mode');
       if (trackingMode === "BODY") {
         trackingMode = "HAND";
-        btn.textContent = "Kamera: Ikut Tangan";
+        btn.textContent = "Kamera: Tangan";
       } else {
         trackingMode = "BODY";
-        btn.textContent = "Kamera: Ikut Badan";
+        btn.textContent = "Kamera: Badan";
       }
       resetPoseTracker();
     }
@@ -1533,112 +2673,176 @@
       document.getElementById('btn-cam-view').textContent = hidden ? "Tunjuk Kamera" : "Sorok Kamera";
     }
 
+    function toggleAutoPilot() {
+      autoPilot = !autoPilot;
+      if (autoPilot) usedAutoPilot = true;
+      const btn = document.getElementById('btn-autopilot');
+      btn.classList.toggle('auto-on', autoPilot);
+      btn.textContent = autoPilot ? "Auto-Pilot: ON" : "Auto-Pilot";
+      showToast(autoPilot ? "Mod Demo Auto-Pilot Aktif" : "Kawalan Manual Aktif", "bonus");
+    }
+
+    function runAutoPilotLogic() {
+      if (!autoPilot || !isRunning || skyDropTime > 0) return;
+      const laneDanger = [false, false, false];
+      const laneReward = [0, 0, 0];
+
+      vehicles.forEach(v => {
+        const z = v.g.position.z;
+        if (z > -26 && z < 4) {
+          const li = LANES.indexOf(v.x);
+          if (li >= 0) laneDanger[li] = true;
+        }
+      });
+      items.forEach(it => {
+        if (it.state !== 0 || it.z < -22 || it.z > 2) return;
+        const li = LANES.indexOf(it.x);
+        if (li < 0) return;
+        if (!it.tpl.isHealthy) {
+          if (it.z > -11 && li === currentLane && laneDanger[li] === false) doJump();
+          laneDanger[li] = true;
+        } else {
+          laneReward[li] += 1;
+        }
+      });
+
+      if (laneDanger[currentLane]) {
+        const safe = [0, 1, 2].filter(l => !laneDanger[l]);
+        if (safe.length > 0) {
+          safe.sort((a, b) => laneReward[b] - laneReward[a]);
+          setPlayerLane(safe[0]);
+        }
+      } else {
+        const best = [0, 1, 2].filter(l => !laneDanger[l]).sort((a, b) => laneReward[b] - laneReward[a])[0];
+        if (best !== undefined && laneReward[best] > laneReward[currentLane]) setPlayerLane(best);
+      }
+    }
+
     // =====================================================================
-    // 7. CORAK HALANGAN & MAKANAN (TIDAK LAGI MENUTUP MAKANAN PROSES)
+    // 11. CORAK HALANGAN, MAKANAN & GERBANG NEON
     // =====================================================================
     const randLane = () => (Math.random() * 3) | 0;
     const otherLanes = l => [0, 1, 2].filter(x => x !== l);
     const pick = arr => arr[(Math.random() * arr.length) | 0];
 
     function healthyLine(lane, z0, n) {
-      for (let i = 0; i < n; i++) spawnItem(true, lane, z0 - i * 3.2, 1.05);
+      for (let i = 0; i < n; i++) spawnItem(true, lane, z0 - i * 3.3, 1.05);
     }
 
-    // Buah di atas makanan proses: diletak tinggi (y = 2.8 - 3.3) supaya tak lindung bahagian depan
     function healthyJumpBonus(lane, zc) {
-      [-3, 0, 3].forEach(dz => {
-        spawnItem(true, lane, zc + dz, dz === 0 ? 3.35 : 2.85);
-      });
+      [-3, 0, 3].forEach(dz => spawnItem(true, lane, zc + dz, dz === 0 ? 3.35 : 2.85));
     }
 
     function spawnPattern(z0) {
-      const elapsed = 60 - timeLeft;
+      const elapsed = GAME_DURATION - timeLeft;
       const r = Math.random();
-      if (r < 0.28) {
-        // Barisan buah/sayur + makanan proses di lorong bersebelahan
+      if (r < 0.25) {
         const L = randLane();
         healthyLine(L, z0, 4);
         spawnItem(false, pick(otherLanes(L)), z0 - 5, JUNK_Y);
-      } else if (r < 0.54) {
-        // Makanan proses di bawah, bonus buah tinggi di atas (tiada item rendah menghalang!)
+        if (Math.random() < 0.45) spawnNeonRing(L, z0 - 11);
+      } else if (r < 0.50) {
         const L = randLane();
         spawnItem(false, L, z0 - 5, JUNK_Y);
         healthyJumpBonus(L, z0 - 5);
-        if (Math.random() < 0.55) healthyLine(pick(otherLanes(L)), z0 - 2, 3);
-      } else if (r < 0.78) {
-        // Dua lorong makanan proses jelas, satu lorong buah selamat
+        if (Math.random() < 0.5) healthyLine(pick(otherLanes(L)), z0 - 2, 3);
+      } else if (r < 0.74) {
         const free = randLane();
         otherLanes(free).forEach(l => spawnItem(false, l, z0 - 4, JUNK_Y));
         healthyLine(free, z0 - 1, 3);
+        if (Math.random() < 0.55) spawnNeonRing(free, z0 - 9);
       } else {
-        // Kereta api: kena tukar lorong
         const free = randLane();
         const others = otherLanes(free);
-        const both = Math.random() < 0.3 + elapsed / 150;
-        (both ? others : [pick(others)]).forEach(l => spawnTrain(l, z0 - 6));
+        const both = Math.random() < 0.35 + elapsed / 150;
+        (both ? others : [pick(others)]).forEach(l => spawnVehicle(l, z0 - 5));
         healthyLine(free, z0, 4);
       }
     }
 
     function clearWorldObjects() {
       for (let i = items.length - 1; i >= 0; i--) removeItem(i);
-      trains.forEach(tr => scene.remove(tr.g));
-      trains = [];
+      vehicles.forEach(v => scene.remove(v.g));
+      vehicles = [];
+      neonRings.forEach(r => scene.remove(r.g));
+      neonRings = [];
+      landmarkObjects.forEach(m => scene.remove(m));
+      landmarkObjects = [];
+      spawnedLandmarks.clear();
     }
 
     // =====================================================================
-    // 8. MULA / TAMAT PERMAINAN
+    // 12. MULA / TAMAT / KEMBALI KE PETA
     // =====================================================================
     function updateLivesUI() {
       heartSvgs.forEach((svg, idx) => svg.classList.toggle('lost', idx >= lives));
     }
 
-    function showFloatingFeedback(text, isGood) {
-      const pop = document.createElement('div');
-      pop.className = 'floating-popup';
-      pop.style.background = isGood ? 'rgba(6, 78, 59, 0.95)' : 'rgba(136, 19, 55, 0.95)';
-      pop.style.border = `3px solid ${isGood ? '#10b981' : '#f43f5e'}`;
-      pop.textContent = text;
-      document.body.appendChild(pop);
-      setTimeout(() => pop.remove(), 1200);
+    function updateZoneUI(zIdx) {
+      const z = MIRI_ZONES[zIdx] || MIRI_ZONES[0];
+      zoneTitleEl.textContent = z.name;
+      zonePillEl.textContent = z.pill;
     }
 
     function takeDamage(msg) {
-      if (player.inv > 0 || !isRunning) return;
+      if (player.inv > 0 || !isRunning || skyDropTime > 0) return;
       lives--;
       junkHitCount++;
+      combo = 1;
+      comboValEl.textContent = '1x';
       updateLivesUI();
       playSound('hit');
-      showFloatingFeedback(msg, false);
+      showToast(`-1 Nyawa · ${msg}`, "bad");
       damageFlashEl.style.opacity = '1';
       setTimeout(() => { damageFlashEl.style.opacity = '0'; }, 200);
-      shake = 0.4;
+      shake = 0.48;
       player.inv = 1.6;
       if (lives <= 0) endGame(false);
     }
 
     function startGame() {
-      score = 0; lives = 3; timeLeft = 60; lastShownSecond = 60;
-      healthyCount = 0; junkHitCount = 0;
+      score = 0; lives = 3; timeLeft = GAME_DURATION; lastShownSecond = GAME_DURATION;
+      combo = 1; maxCombo = 1; healthyCount = 0; junkHitCount = 0;
+      currentZoneIdx = 0;
+      usedAutoPilot = autoPilot;
       isRunning = true;
+      skyDropTime = SKY_DROP_DURATION;
       clearWorldObjects();
       resetPoseTracker();
 
-      scoreValEl.textContent = score;
-      timerValEl.textContent = '60s';
+      scoreValEl.textContent = '0';
+      comboValEl.textContent = '1x';
+      timerValEl.textContent = `${GAME_DURATION}s`;
       updateLivesUI();
+      updateZoneUI(0);
       setPlayerLane(1);
-      player.x = 0; player.y = 0; player.vy = 0; player.roll = 0; player.inv = 0; player.jumpBuffer = 0;
+      player.x = 0; player.y = 24; player.vy = 0; player.roll = 0; player.inv = 0; player.jumpBuffer = 0; player.boostTimer = 0;
 
-      startModalEl.style.display = 'none';
+      startScreenEl.classList.add('hidden');
       endModalEl.style.display = 'none';
       reportModalEl.style.display = 'none';
+      hudEl.classList.add('visible');
+      minimapBoxEl.classList.add('visible');
 
-      healthyLine(1, -30, 4);
-      let lastZ = -30;
-      for (let z = -62; z >= SPAWN_Z; z -= SPAWN_GAP) { spawnPattern(z); lastZ = z; }
+      // Mercu tanda pertama: Coco Cabana & Kuda Laut terus kelihatan di depan!
+      spawnedLandmarks.add(0);
+      spawnLandmark(0, -34);
+
+      healthyLine(1, -46, 4);
+      let lastZ = -46;
+      for (let z = -76; z >= SPAWN_Z; z -= SPAWN_GAP) { spawnPattern(z); lastZ = z; }
       distSinceSpawn = SPAWN_GAP - (SPAWN_Z + SPAWN_GAP - lastZ);
-      playSound('collect');
+
+      playSound('drop');
+      showToast("📍 ZON 1: Coco Cabana · Kuda Laut Miri", "bonus");
+    }
+
+    function backToMap() {
+      isRunning = false;
+      endModalEl.style.display = 'none';
+      hudEl.classList.remove('visible');
+      minimapBoxEl.classList.remove('visible');
+      startScreenEl.classList.remove('hidden');
     }
 
     function endGame(survivedFullTime) {
@@ -1648,62 +2852,118 @@
 
       const titleEl = document.getElementById('end-title');
       const msgEl = document.getElementById('final-message');
+      const subEl = document.getElementById('final-substats');
       document.getElementById('final-score').textContent = `${score} Markah`;
+      subEl.innerHTML = `<span>Buah & Sayur: <strong>${healthyCount}</strong></span><span>·</span><span>Kombo Tertinggi: <strong>${maxCombo}x</strong></span><span>·</span><span>Baki Nyawa: <strong>${lives}</strong></span>`;
 
       if (survivedFullTime) {
-        titleEl.textContent = "Tahniah! Misi 60 Saat Berjaya!";
+        titleEl.textContent = "Tiba di Gua Niah! Misi Berjaya!";
         titleEl.style.color = "#facc15";
-        msgEl.textContent = `Hebat! Anda kutip ${healthyCount} buah & sayur dan tamat dengan baki ${lives} nyawa!`;
+        msgEl.textContent = `Tahniah! Anda berjaya menamatkan larian dari Coco Cabana, Pustaka Miri hingga ke Taman Negara Gua Niah dengan mengutip ${healthyCount} makanan sihat!`;
       } else {
         titleEl.textContent = "Nyawa Habis! Cuba Lagi!";
-        titleEl.style.color = "#f43f5e";
-        msgEl.textContent = `Anda kutip ${healthyCount} buah & sayur. Ingat, makanan tinggi gula dan ultra-proses perlu dielakkan. Jom cuba lagi!`;
+        titleEl.style.color = "#fb7185";
+        msgEl.textContent = `Anda mengutip ${healthyCount} buah & sayur. Ingat, elakkan makanan ultra-proses dan minuman tinggi gula untuk kekal bertenaga!`;
       }
 
       endModalEl.style.display = 'flex';
-      saveLocalRecord(score, lives, survivedFullTime ? "Selesai 60s" : "Habis Nyawa");
+      if (!usedAutoPilot) {
+        saveLocalRecord(score, lives, survivedFullTime ? "Selesai 60s (Gua Niah)" : "Habis Nyawa");
+      }
     }
 
     // =====================================================================
-    // 9. GELUNG UTAMA
+    // 13. GELUNG UTAMA DUNIA & KAMERA
     // =====================================================================
     function updateWorld(dt, move, t) {
-      trackTex.offset.y = (trackTex.offset.y + move / 10) % 1;
+      roadTex.offset.y = (roadTex.offset.y + move / 16) % 1;
 
+      // Bangunan malam bergerak
       buildings.forEach(b => { b.position.z += move; });
       buildings.forEach(b => {
         const d = b.userData.d;
-        if (b.position.z - d / 2 > 18) {
+        if (b.position.z - d / 2 > 22) {
           let minBack = Infinity;
           buildings.forEach(o => {
             if (o.userData.side === b.userData.side) minBack = Math.min(minBack, o.position.z - o.userData.d / 2);
           });
-          b.position.z = minBack - 0.5 - Math.random() * 1.5 - d / 2;
+          b.position.z = minBack - 2.2 - Math.random() * 2.5 - d / 2;
         }
       });
 
+      // Tiang lampu
       poles.forEach(p => {
         p.position.z += move;
-        if (p.position.z > 18) p.position.z -= POLE_COUNT * POLE_SPACING;
+        if (p.position.z > 22) p.position.z -= POLE_COUNT * POLE_SPACING;
       });
 
-      for (let i = trains.length - 1; i >= 0; i--) {
-        const tr = trains[i];
-        tr.g.position.z += move;
-        const z = tr.g.position.z;
-        if (isRunning && !tr.hit && Math.abs(tr.x - player.x) < 1.35 &&
-            z + TRAIN_LEN / 2 > -0.4 && z - TRAIN_LEN / 2 < 0.4) {
-          tr.hit = true;
-          takeDamage("-1 Nyawa! Terlanggar kereta api!");
-        }
-        if (z - TRAIN_LEN / 2 > 12) {
-          scene.remove(tr.g);
-          trains.splice(i, 1);
+      // Mercu tanda ikonik Miri bergerak
+      for (let i = landmarkObjects.length - 1; i >= 0; i--) {
+        const m = landmarkObjects[i];
+        m.position.z += move;
+        if (m.position.z > 32) {
+          scene.remove(m);
+          landmarkObjects.splice(i, 1);
         }
       }
 
-      const dangerPulse = 1 + Math.sin(t * 9) * 0.1;
+      // Hujan neon halus
+      const rPos = rainGeo.attributes.position.array;
+      for (let i = 0; i < RAIN_COUNT; i++) {
+        let ry = rPos[i * 6 + 1] - dt * 16;
+        let rz = rPos[i * 6 + 2] + move * 0.9;
+        if (ry < 0.5 || rz > 14) {
+          ry = 14 + Math.random() * 6;
+          rz = -Math.random() * 85;
+        }
+        rPos[i * 6 + 1] = ry; rPos[i * 6 + 2] = rz;
+        rPos[i * 6 + 4] = ry - 0.75; rPos[i * 6 + 5] = rz + 0.55;
+      }
+      rainGeo.attributes.position.needsUpdate = true;
 
+      // Kenderaan neon
+      for (let i = vehicles.length - 1; i >= 0; i--) {
+        const v = vehicles[i];
+        v.g.position.z += move * 1.12;
+        const z = v.g.position.z;
+        if (isRunning && skyDropTime <= 0 && !v.hit && Math.abs(v.x - player.x) < 1.32 &&
+            z + v.len / 2 > -0.45 && z - v.len / 2 < 0.45 && player.y < 1.65) {
+          v.hit = true;
+          takeDamage("Terlanggar kenderaan di jalan raya!");
+        }
+        if (z > 16) {
+          scene.remove(v.g);
+          vehicles.splice(i, 1);
+        }
+      }
+
+      // Gerbang Neon Oktagon
+      for (let i = neonRings.length - 1; i >= 0; i--) {
+        const nr = neonRings[i];
+        nr.z += move;
+        nr.g.position.z = nr.z;
+        nr.g.rotation.z += dt * 1.4;
+        if (isRunning && skyDropTime <= 0 && !nr.passed && Math.abs(nr.z) < 1.15 && Math.abs(nr.x - player.x) < 1.35) {
+          nr.passed = true;
+          combo = Math.min(10, combo + 1);
+          maxCombo = Math.max(maxCombo, combo);
+          const pts = 25 * Math.min(3, combo);
+          score += pts;
+          player.boostTimer = 1.4;
+          scoreValEl.textContent = score;
+          comboValEl.textContent = `${combo}x`;
+          playSound('ring');
+          showToast(`+${pts} · GERBANG SIHAT MIRI (${combo}x KOMBO!)`, "bonus");
+          nr.g.scale.setScalar(1.35);
+        }
+        if (nr.z > 14) {
+          scene.remove(nr.g);
+          neonRings.splice(i, 1);
+        }
+      }
+
+      // Makanan sihat & makanan proses
+      const dangerPulse = 1 + Math.sin(t * 9) * 0.1;
       for (let i = items.length - 1; i >= 0; i--) {
         const it = items[i];
         if (it.state === 0) {
@@ -1711,24 +2971,28 @@
           it.obj.position.z = it.z;
           it.visual.position.y = it.baseY + Math.sin(t * 4.5 + it.phase) * 0.12;
           it.model.rotation.y += dt * 2.5;
-
           if (it.halo) {
             it.halo.scale.setScalar(dangerPulse);
             it.groundMarker.scale.setScalar(1 + Math.sin(t * 9) * 0.06);
           }
 
-          if (isRunning && Math.abs(it.z) < 0.95 && Math.abs(it.x - player.x) < 1.0) {
+          if (isRunning && skyDropTime <= 0 && Math.abs(it.z) < 1.0 && Math.abs(it.x - player.x) < 1.05) {
             const top = player.roll > 0 ? player.y + 1.15 : player.y + 2.3;
-            // Lompat atas makanan proses lebih pemaaf supaya rasa adil
-            const bottom = it.tpl.isHealthy ? player.y - 0.4 : player.y - 0.1;
+            const bottom = it.tpl.isHealthy ? player.y - 0.45 : player.y - 0.1;
             const touching = it.baseY >= bottom && it.baseY <= top;
             if (touching) {
               if (it.tpl.isHealthy) {
-                score += 10;
                 healthyCount++;
+                if (healthyCount % 5 === 0) {
+                  combo = Math.min(10, combo + 1);
+                  maxCombo = Math.max(maxCombo, combo);
+                  comboValEl.textContent = `${combo}x`;
+                }
+                const pts = 10;
+                score += pts;
                 scoreValEl.textContent = score;
                 playSound('collect');
-                showFloatingFeedback(it.tpl.msg, true);
+                showToast(`+${pts} · ${it.tpl.msg}`, "good");
                 it.groundMarker.visible = false;
                 it.state = 1; it.t = 0;
               } else if (player.inv <= 0) {
@@ -1738,11 +3002,11 @@
               }
             }
           }
-          if (it.state === 0 && it.z > 10) { removeItem(i); continue; }
+          if (it.state === 0 && it.z > 12) { removeItem(i); continue; }
         }
         if (it.state === 1) {
           it.t += dt;
-          const k = Math.min(1, it.t / 0.3);
+          const k = Math.min(1, it.t / 0.28);
           it.obj.position.set(player.x, 0, -0.5);
           it.visual.position.y = player.y + 1.4 + k * 1.4;
           it.model.rotation.y += dt * 14;
@@ -1752,7 +3016,7 @@
         }
       }
 
-      if (isRunning) {
+      if (isRunning && skyDropTime <= 0) {
         distSinceSpawn += move;
         if (distSinceSpawn >= SPAWN_GAP) {
           distSinceSpawn -= SPAWN_GAP;
@@ -1761,15 +3025,45 @@
       }
     }
 
+    function checkZoneMilestones(elapsed) {
+      let targetZone = 0;
+      for (let i = MIRI_ZONES.length - 1; i >= 0; i--) {
+        if (elapsed >= MIRI_ZONES[i].startSec) { targetZone = i; break; }
+      }
+      if (targetZone !== currentZoneIdx) {
+        currentZoneIdx = targetZone;
+        updateZoneUI(currentZoneIdx);
+        const z = MIRI_ZONES[currentZoneIdx];
+        showToast(`📍 ${z.pill}: ${z.name}`, "bonus");
+      }
+      // Munculkan mercu tanda 3D sedikit awal sebelum zon bermula supaya nampak dari jauh
+      [[1, 12], [2, 27], [3, 42]].forEach(([zId, triggerSec]) => {
+        if (elapsed >= triggerSec && !spawnedLandmarks.has(zId)) {
+          spawnedLandmarks.add(zId);
+          spawnLandmark(zId, -128);
+        }
+      });
+    }
+
     function updateCamera(dt) {
       shake = Math.max(0, shake - dt);
       const sx = (Math.random() - 0.5) * shake;
       const sy = (Math.random() - 0.5) * shake;
-      // Sudut kamera sedikit lebih tinggi supaya watak tak tutup halangan depan
-      const camZ = isPortrait ? 9.8 : 7.8;
-      const camY = isPortrait ? 5.8 : 5.2;
-      camera.position.set(player.x * 0.58 + sx, camY + player.y * 0.32 + sy, camZ);
-      camera.lookAt(player.x * 0.42, 1.25 + player.y * 0.25, -13);
+      const chaseZ = isPortrait ? 9.8 : 7.8;
+      const chaseY = isPortrait ? 5.6 : 5.0;
+
+      if (skyDropTime > 0) {
+        // Transisi kamera dari pandangan atas bangunan (Sky Drop) ke belakang pelari
+        const p = 1 - skyDropTime / SKY_DROP_DURATION;
+        const ease = 1 - Math.pow(1 - p, 3);
+        const cy = 28 * (1 - ease) + chaseY * ease;
+        const cz = 1.5 * (1 - ease) + chaseZ * ease;
+        camera.position.set(player.x * 0.4 + sx, cy + sy, cz);
+        camera.lookAt(player.x * 0.3, player.y * (1 - ease) + 1.3 * ease, -14 * ease);
+      } else {
+        camera.position.set(player.x * 0.58 + sx, chaseY + player.y * 0.32 + sy, chaseZ);
+        camera.lookAt(player.x * 0.42, 1.35 + player.y * 0.24, -15);
+      }
     }
 
     function resize() {
@@ -1779,6 +3073,11 @@
       isPortrait = w / h < 1;
       camera.fov = isPortrait ? 78 : 60;
       camera.updateProjectionMatrix();
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      mapIntroCanvas.width = Math.floor(w * dpr);
+      mapIntroCanvas.height = Math.floor(h * dpr);
+      mapIntroCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     window.addEventListener('resize', resize);
     resize();
@@ -1791,13 +3090,28 @@
       clock += dt;
 
       if (isRunning) {
-        timeLeft -= dt;
-        const sec = Math.max(0, Math.ceil(timeLeft));
-        if (sec !== lastShownSecond) { lastShownSecond = sec; timerValEl.textContent = `${sec}s`; }
-        speed = 13 + (60 - timeLeft) * 0.16;
-        if (timeLeft <= 0) { timeLeft = 0; endGame(true); }
+        if (skyDropTime <= 0) {
+          timeLeft -= dt;
+          const elapsed = GAME_DURATION - timeLeft;
+          const sec = Math.max(0, Math.ceil(timeLeft));
+          if (sec !== lastShownSecond) { lastShownSecond = sec; timerValEl.textContent = `${sec}s`; }
+          const boostAdd = player.boostTimer > 0 ? 4.5 : 0;
+          speed = 14.5 + elapsed * 0.16 + boostAdd;
+          speedValEl.textContent = `${Math.round(speed * 4.2)} km/h`;
+          checkZoneMilestones(elapsed);
+          runAutoPilotLogic();
+          if (timeLeft <= 0) { timeLeft = 0; endGame(true); }
+        } else {
+          speed = 0;
+          speedValEl.textContent = '0 km/h';
+        }
+        const progress = Math.max(0, Math.min(1, (GAME_DURATION - timeLeft) / GAME_DURATION));
+        drawMiriNeonMap(minimapCtx, minimapCanvas.width, minimapCanvas.height, clock, progress, true);
       } else {
-        speed = IDLE_SPEED;
+        speed = 7;
+        if (!startScreenEl.classList.contains('hidden')) {
+          drawMiriNeonMap(mapIntroCtx, window.innerWidth, window.innerHeight, clock, 0, false);
+        }
       }
 
       const move = speed * dt;
@@ -1809,23 +3123,15 @@
     }
 
     // =====================================================================
-    // 10. KAWALAN KAMERA MEDIAPIPE PANTAS (HYBRID TANGAN + LOMPAT LAJU)
+    // 14. KAWALAN KAMERA MEDIAPIPE PANTAS (HYBRID TANGAN + LOMPAT LAJU)
     // =====================================================================
     const videoElement = document.getElementById('webcam-video');
     const camStatusEl = document.getElementById('cam-status');
-    let poseBaseline = null;
-    let prevSy = null;
-    let prevHandY = null;
-    let smoothedX = null;
-    let handUpLatch = false;
-    let lastGestureTime = 0;
+    let poseBaseline = null, prevSy = null, prevHandY = null, smoothedX = null;
+    let handUpLatch = false, lastGestureTime = 0;
 
     function resetPoseTracker() {
-      poseBaseline = null;
-      prevSy = null;
-      prevHandY = null;
-      smoothedX = null;
-      handUpLatch = false;
+      poseBaseline = null; prevSy = null; prevHandY = null; smoothedX = null; handUpLatch = false;
     }
 
     function onPoseResults(results) {
@@ -1833,6 +3139,7 @@
         sensorDotEl.style.display = 'none';
         return;
       }
+      if (autoPilot) return;
       const lm = results.poseLandmarks;
       const now = performance.now();
       const nose = lm[0], ls = lm[11], rs = lm[12], lw = lm[15], rw = lm[16];
@@ -1843,7 +3150,6 @@
       let rawX = null, rawY = null;
 
       if (trackingMode === "BODY") {
-        // Kedudukan lorong: guna purata bahu (lebih stabil daripada hidung semata-mata)
         if (hasShoulders) {
           rawX = 1 - (ls.x + rs.x) / 2;
           rawY = sy;
@@ -1856,49 +3162,32 @@
 
         if (sy !== null) {
           if (poseBaseline === null) poseBaseline = sy;
-          const upFromBase = poseBaseline - sy;               // positif = naik
-          const upVelocity = prevSy !== null ? prevSy - sy : 0; // positif = tengah melonjak naik
+          const upFromBase = poseBaseline - sy;
+          const upVelocity = prevSy !== null ? prevSy - sy : 0;
 
-          // Cara 1 (Paling Pantas): Angkat MANA-MANA sebelah tangan melepasi paras bahu
           const leftRaised  = lw && (lw.visibility ?? 1) > 0.45 && lw.y < sy - shoulderW * 0.22;
           const rightRaised = rw && (rw.visibility ?? 1) > 0.45 && rw.y < sy - shoulderW * 0.22;
           const anyHandRaised = leftRaised || rightRaised;
-
           if (!anyHandRaised) handUpLatch = false;
 
           if (now - lastGestureTime > 420) {
             if (anyHandRaised && !handUpLatch) {
-              doJump();
-              flashGesture("LOMPAT! (TANGAN)");
-              handUpLatch = true;
-              lastGestureTime = now;
+              doJump(); flashGesture("LOMPAT! (TANGAN)"); handUpLatch = true; lastGestureTime = now;
             } else if (
-              // Cara 2: Lompat fizikal berasaskan kelajuan melonjak (auto-skala ikut jarak kamera)
               (upVelocity > Math.max(0.017, shoulderW * 0.13) && upFromBase > shoulderW * 0.04) ||
               (upFromBase > Math.max(0.038, shoulderW * 0.24))
             ) {
-              doJump();
-              flashGesture("LOMPAT!");
-              lastGestureTime = now;
-            } else if (
-              // Cangkung: pastikan badan benar-benar turun jauh & tidak sedang bangun
-              (-upFromBase > Math.max(0.075, shoulderW * 0.45)) &&
-              upVelocity <= 0.006
-            ) {
-              doRoll();
-              flashGesture("GULING!");
-              lastGestureTime = now;
+              doJump(); flashGesture("LOMPAT!"); lastGestureTime = now;
+            } else if ((-upFromBase > Math.max(0.075, shoulderW * 0.45)) && upVelocity <= 0.006) {
+              doRoll(); flashGesture("GULING!"); lastGestureTime = now;
             }
           }
-
-          // Kemas kini baseline perlahan-lahan HANYA bila pemain berdiri tenang
           if (Math.abs(upFromBase) < shoulderW * 0.16) {
             poseBaseline += (sy - poseBaseline) * 0.05;
           }
           prevSy = sy;
         }
       } else {
-        // MOD TANGAN: Guna pergelangan tangan (15/16) yang lebih tepat & pantas
         const lwOk = lw && (lw.visibility ?? 1) > 0.4;
         const rwOk = rw && (rw.visibility ?? 1) > 0.4;
         let activeHand = null;
@@ -1910,18 +3199,12 @@
           rawX = 1 - activeHand.x;
           rawY = activeHand.y;
           activeControlUsed = "Kamera (Gerak Tangan)";
-
           const handFlickUp = prevHandY !== null ? prevHandY - activeHand.y : 0;
           const aboveFace = nose ? activeHand.y < nose.y + 0.02 : (sy !== null && activeHand.y < sy - shoulderW * 0.35);
-
           if (!aboveFace) handUpLatch = false;
-
           if (now - lastGestureTime > 420) {
             if ((aboveFace && !handUpLatch) || (handFlickUp > 0.055 && sy !== null && activeHand.y < sy + 0.05)) {
-              doJump();
-              flashGesture("LOMPAT!");
-              handUpLatch = true;
-              lastGestureTime = now;
+              doJump(); flashGesture("LOMPAT!"); handUpLatch = true; lastGestureTime = now;
             }
           }
           prevHandY = activeHand.y;
@@ -1929,7 +3212,6 @@
       }
 
       if (rawX !== null) {
-        // Penapis ringan supaya lorong pantas bertukar tanpa bergetar
         smoothedX = smoothedX === null ? rawX : smoothedX + (rawX - smoothedX) * 0.55;
         sensorDotEl.style.display = 'block';
         sensorDotEl.style.left = `${Math.max(3, Math.min(97, smoothedX * 100))}%`;
@@ -1946,30 +3228,28 @@
         const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
         pose.setOptions({
           modelComplexity: 0,
-          smoothLandmarks: false, // Dimatikan supaya pengesanan lompat & sentak tangan serta-merta
+          smoothLandmarks: false,
           minDetectionConfidence: 0.5,
           minTrackingConfidence: 0.5
         });
         pose.onResults(onPoseResults);
-        // Resolusi 320x240 gandakan kelajuan FPS kamera & kurangkan lag
         const cam = new Camera(videoElement, {
           onFrame: async () => { await pose.send({ image: videoElement }); },
           width: 320,
           height: 240
         });
         await cam.start();
-        camStatusEl.textContent = "Kamera pantas aktif: gerak Kiri/Kanan, angkat sebelah tangan / lompat! (Tiada video dirakam)";
-        camStatusEl.style.color = "#facc15";
+        camStatusEl.textContent = "Kamera pantas aktif · Gerak Kiri/Kanan, angkat sebelah tangan / lompat! (Tiada video dirakam)";
       } catch (err) {
         console.warn("Kamera tidak dapat diakses, guna sentuhan/kekunci:", err);
-        camStatusEl.textContent = "Mod Kekunci/Sentuhan: ◀ ▶ tukar lorong, ▲ lompat, ▼ guling (atau swipe).";
+        camStatusEl.textContent = "Mod Kekunci / Sentuhan Aktif · ◀ ▶ tukar lorong, Space lompat, ▼ guling";
         camPanelEl.classList.add('hidden');
         document.getElementById('btn-cam-view').textContent = "Tunjuk Kamera";
       }
     }
 
     // =====================================================================
-    // 11. REKOD LAPORAN TEMPATAN (LOCALSTORAGE + CSV)
+    // 15. REKOD LAPORAN TEMPATAN (LOCALSTORAGE + CSV)
     // =====================================================================
     const STORAGE_KEY = "rekod_larian_wira_sihat";
 
@@ -1996,24 +3276,27 @@
     }
 
     function updateReportButtonUI() {
-      const btn = document.getElementById('btn-open-report');
-      if (btn) btn.textContent = `Laporan (${getRecords().length})`;
+      const count = getRecords().length;
+      const b1 = document.getElementById('btn-open-report');
+      const b2 = document.getElementById('btn-start-report');
+      if (b1) b1.textContent = `Laporan (${count})`;
+      if (b2) b2.textContent = `Laporan (${count})`;
     }
 
     function openReportModal() {
       const existing = getRecords();
       const box = document.getElementById('report-summary-box');
       if (existing.length === 0) {
-        box.innerHTML = "Belum ada rekod pemain bagi modul Larian Wira Sihat ini.";
+        box.innerHTML = "Belum ada rekod pemain bagi modul Miri Neon Run ini.";
       } else {
         const total = existing.length;
         const avg = (existing.reduce((a, r) => a + Number(r.markah), 0) / total).toFixed(1);
-        const survivedCount = existing.filter(r => r.status === "Selesai 60s").length;
+        const survivedCount = existing.filter(r => r.status.indexOf("Selesai 60s") !== -1).length;
         box.innerHTML = `
-          <div><strong>Modul:</strong> Larian Wira Sihat (3 Lorong)</div>
+          <div><strong>Modul:</strong> Miri Neon Run · Larian Wira Sihat</div>
           <div><strong>Jumlah Pemain:</strong> ${total} orang</div>
           <div><strong>Purata Markah:</strong> ${avg} markah</div>
-          <div><strong>Berjaya Bertahan 60 Saat:</strong> ${survivedCount} orang</div>
+          <div><strong>Tiba di Gua Niah (60s):</strong> ${survivedCount} orang</div>
         `;
       }
       reportModalEl.style.display = 'flex';
@@ -2039,7 +3322,7 @@
     }
 
     function clearLocalRecords() {
-      if (confirm("Padam semua rekod pemain bagi modul Larian Wira Sihat ini?")) {
+      if (confirm("Padam semua rekod pemain bagi modul Miri Neon Run ini?")) {
         localStorage.removeItem(STORAGE_KEY);
         updateReportButtonUI();
         openReportModal();
@@ -2047,9 +3330,33 @@
     }
 
     Object.assign(window, {
-      startGame, toggleTrackingMode, toggleCamPanel,
+      startGame, backToMap, toggleTrackingMode, toggleCamPanel, toggleAutoPilot,
       openReportModal, closeReportModal, downloadCSVReport, clearLocalRecords
     });
+
+    // =====================================================================
+    // 16. SEKUENS LOADING BERGAYA & MULA ENJIN
+    // =====================================================================
+    const LOAD_STEPS = [
+      [22, "Memuatkan peta Miri, Sarawak..."],
+      [48, "Membina Kuda Laut Coco Cabana..."],
+      [74, "Menyalakan Grand Old Lady & Pustaka Miri..."],
+      [94, "Menyediakan gerbang Taman Negara Gua Niah..."],
+      [100, "Sedia untuk larian!"]
+    ];
+    let stepIdx = 0;
+    const loadTimer = setInterval(() => {
+      if (stepIdx < LOAD_STEPS.length) {
+        const [pct, txt] = LOAD_STEPS[stepIdx++];
+        progressFillEl.style.width = `${pct}%`;
+        loadingPctEl.textContent = `${pct}%`;
+        loadingStepEl.textContent = txt;
+      } else {
+        clearInterval(loadTimer);
+        loadingScreenEl.classList.add('fade-out');
+        setTimeout(() => { loadingScreenEl.style.display = 'none'; }, 480);
+      }
+    }, 240);
 
     window.__gameReady = true;
     updateReportButtonUI();
