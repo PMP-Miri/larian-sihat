@@ -2162,71 +2162,109 @@
     }
 
     // =====================================================================
-    // 9. WATAK 3D KONSEP PIXAR + JEJAK NEON & PERCIKAN API BERLARI
+    // 9. WATAK 3D GAYA NEON FIGURINE (KUNING BERCAHAYA + GARISAN SUKAN NEON)
     // =====================================================================
-    function makeSpaceShirtTexture() {
-      const [c, g] = makeCanvas(256, 256);
-      g.fillStyle = '#1b3154';
-      g.fillRect(0, 0, 256, 256);
-      g.fillStyle = '#facc15';
-      [[50, 55], [120, 42], [180, 90], [90, 145], [150, 185], [210, 140], [65, 200]].forEach(([x, y]) => {
-        g.beginPath(); g.arc(x, y, 4, 0, Math.PI * 2); g.fill();
-      });
-      const drawPlanet = (x, y, r, col) => {
-        g.strokeStyle = '#93c5fd'; g.lineWidth = 3;
-        g.beginPath(); g.ellipse(x, y, r * 1.8, r * 0.5, -0.35, 0, Math.PI * 2); g.stroke();
-        g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-      };
-      drawPlanet(128, 115, 11, '#f97316');
-      drawPlanet(70, 110, 8, '#38bdf8');
-      drawPlanet(185, 175, 9, '#34d399');
-      return c;
-    }
+    function makeNeonBodyTexture() {
+      const [c, g] = makeCanvas(512, 512);
+      // Asas kuning keemasan cerah & lembut (gaya Neon Scramble)
+      const grad = g.createLinearGradient(0, 0, 0, 512);
+      grad.addColorStop(0, '#fef08a');
+      grad.addColorStop(0.45, '#fde047');
+      grad.addColorStop(1, '#facc15');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 512, 512);
 
-    function makeVestTexture() {
-      const [c, g] = makeCanvas(256, 256);
-      g.fillStyle = '#dc5a28';
-      g.fillRect(0, 0, 256, 256);
-      g.strokeStyle = 'rgba(85, 25, 8, 0.38)';
-      g.lineWidth = 4;
-      g.beginPath();
-      g.moveTo(0, 72); g.lineTo(256, 72);
-      g.moveTo(0, 232); g.lineTo(256, 232);
-      g.moveTo(86, 72); g.lineTo(86, 232);
-      g.moveTo(170, 72); g.lineTo(170, 232);
-      g.stroke();
+      // Garisan sukan moden di sekeliling pinggang & dada
+      g.fillStyle = '#0f172a';
+      g.fillRect(0, 336, 512, 34);
+      g.fillStyle = '#38bdf8';
+      g.fillRect(0, 343, 512, 10);
+      g.fillStyle = '#34d399';
+      g.fillRect(0, 357, 512, 7);
+
+      // Garisan jalur sisi badan (kiri & kanan)
+      [118, 378].forEach(x => {
+        g.fillStyle = '#0f172a';
+        g.fillRect(x, 0, 16, 512);
+        g.fillStyle = '#38bdf8';
+        g.fillRect(x + 4, 0, 8, 512);
+      });
+
+      // Garisan chevron / V-line di bahagian belakang (utama dilihat pemain) & depan
+      [0, 256].forEach(cx => {
+        g.strokeStyle = '#0f172a';
+        g.lineWidth = 18;
+        g.lineCap = 'round';
+        g.lineJoin = 'round';
+        g.beginPath();
+        g.moveTo(cx - 58, 128);
+        g.lineTo(cx, 198);
+        g.lineTo(cx + 58, 128);
+        g.stroke();
+
+        g.strokeStyle = '#10b981';
+        g.lineWidth = 8;
+        g.beginPath();
+        g.moveTo(cx - 58, 128);
+        g.lineTo(cx, 198);
+        g.lineTo(cx + 58, 128);
+        g.stroke();
+
+        // Garisan V kedua lebih halus di bawah
+        g.strokeStyle = '#f97316';
+        g.lineWidth = 6;
+        g.beginPath();
+        g.moveTo(cx - 42, 186);
+        g.lineTo(cx, 238);
+        g.lineTo(cx + 42, 186);
+        g.stroke();
+      });
+
+      // Bungkus semula chevron di tepi kanan (x = 512 -> bersambung ke x = 0)
+      g.strokeStyle = '#0f172a';
+      g.lineWidth = 18;
+      g.beginPath(); g.moveTo(454, 128); g.lineTo(512, 198); g.stroke();
+      g.strokeStyle = '#10b981';
+      g.lineWidth = 8;
+      g.beginPath(); g.moveTo(454, 128); g.lineTo(512, 198); g.stroke();
+      g.strokeStyle = '#f97316';
+      g.lineWidth = 6;
+      g.beginPath(); g.moveTo(470, 186); g.lineTo(512, 238); g.stroke();
+
       return c;
     }
 
     function buildRunner() {
-      const std = (color, roughness = 0.65, extra = {}) =>
-        new THREE.MeshStandardMaterial({
-          color, roughness, metalness: 0.05,
-          emissive: new THREE.Color(color).multiplyScalar(0.18),
-          ...extra
-        });
+      const bodyTex = canvasTex(makeNeonBodyTexture());
 
       const M = {
-        skin:       std(0xd69666, 0.58),
-        hair:       std(0x1f1d1c, 0.72),
-        shirt:      std(0xffffff, 0.75, { map: canvasTex(makeSpaceShirtTexture()), emissive: new THREE.Color(0x1e3a5f) }),
-        sleeve:     std(0x1e3a6d, 0.75),
-        vest:       std(0xffffff, 0.7, { map: canvasTex(makeVestTexture()), side: THREE.DoubleSide, emissive: new THREE.Color(0x521d08) }),
-        vestSolid:  std(0xdc5a28, 0.7),
-        vestDark:   std(0xb24016, 0.75),
-        shorts:     std(0xb08d62, 0.78),
-        shortsDark: std(0x8c6c46, 0.8),
-        sock:       std(0xf8fafc, 0.7),
-        sockStripe: std(0x94a3b8, 0.7),
-        shoeBlue:   std(0x3b82f6, 0.45),
-        shoeOrange: std(0xf97316, 0.45),
-        shoeWhite:  std(0xffffff, 0.4),
-        watchBand:  std(0x334155, 0.45),
-        watchFace:  std(0x38bdf8, 0.2),
-        eyeWhite:   new THREE.MeshBasicMaterial({ color: 0xffffff }),
-        iris:       new THREE.MeshBasicMaterial({ color: 0x4a2511 }),
-        pupil:      new THREE.MeshBasicMaterial({ color: 0x0b0b0c }),
-        mouth:      new THREE.MeshBasicMaterial({ color: 0x7c3a21 })
+        // Bahan kuning bercahaya lembut gaya Neon Scramble
+        glowYellow: new THREE.MeshStandardMaterial({
+          color: 0xfde047,
+          emissive: 0xf59e0b,
+          emissiveIntensity: 0.48,
+          roughness: 0.28,
+          metalness: 0.06
+        }),
+        torsoMapped: new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          map: bodyTex,
+          emissive: 0xf59e0b,
+          emissiveMap: bodyTex,
+          emissiveIntensity: 0.42,
+          roughness: 0.28,
+          metalness: 0.06
+        }),
+        collar: new THREE.MeshStandardMaterial({
+          color: 0xf97316,
+          emissive: 0xef4444,
+          emissiveIntensity: 0.72,
+          roughness: 0.25,
+          metalness: 0.1
+        }),
+        lineAccent: new THREE.MeshBasicMaterial({ color: 0x38bdf8 }),
+        lineGreen:  new THREE.MeshBasicMaterial({ color: 0x34d399 }),
+        trimDark:   new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4 })
       };
 
       const mesh = (geo, mat, x = 0, y = 0, z = 0) => {
@@ -2234,136 +2272,98 @@
         m.position.set(x, y, z);
         return m;
       };
-      const capsule = (r, len) => new THREE.CapsuleGeometry(r, len, 6, 14);
+      const capsule = (r, len) => new THREE.CapsuleGeometry(r, len, 8, 16);
 
       const root = new THREE.Group();
       const body = new THREE.Group();
       root.add(body);
 
-      const torsoShirt = mesh(new THREE.CylinderGeometry(0.26, 0.275, 0.68, 20), M.shirt, 0, 1.32, 0);
-      torsoShirt.scale.set(1.04, 1, 0.82);
-      torsoShirt.rotation.y = Math.PI;
-      body.add(torsoShirt);
+      // --- BADAN CHUNKY LICIN + GARISAN SUKAN NEON ---
+      const torsoCore = mesh(new THREE.CylinderGeometry(0.32, 0.34, 0.72, 26), M.torsoMapped, 0, 1.24, 0);
+      torsoCore.scale.set(1.06, 1, 0.84);
+      body.add(torsoCore);
 
-      const vestShell = mesh(
-        new THREE.CylinderGeometry(0.315, 0.305, 0.60, 24, 1, false, -Math.PI * 0.80, Math.PI * 1.60),
-        M.vest, 0, 1.35, 0
-      );
-      vestShell.scale.set(1.04, 1, 0.86);
-      body.add(vestShell);
+      // Bahu & pinggul membulat licin (siluet chunky ala patung neon)
+      const upperChest = mesh(new THREE.SphereGeometry(0.335, 22, 16), M.glowYellow, 0, 1.56, 0);
+      upperChest.scale.set(1.12, 0.52, 0.85);
+      const pelvis = mesh(new THREE.SphereGeometry(0.35, 22, 16), M.glowYellow, 0, 0.90, 0);
+      pelvis.scale.set(1.06, 0.62, 0.84);
+      body.add(upperChest, pelvis);
 
-      const vestCollar = mesh(
-        new THREE.CylinderGeometry(0.22, 0.25, 0.15, 20, 1, false, -Math.PI * 0.72, Math.PI * 1.44),
-        M.vestSolid, 0, 1.67, 0.01
-      );
-      vestCollar.scale.set(1.05, 1, 0.9);
-      body.add(vestCollar);
+      // Garisan timbul 3D neon di pinggang & tulang belakang (nampak jelas dari kamera belakang)
+      const waistLine = mesh(new THREE.TorusGeometry(0.335, 0.024, 10, 28), M.lineAccent, 0, 1.01, 0);
+      waistLine.rotation.x = Math.PI / 2;
+      waistLine.scale.set(1.06, 0.85, 1);
+      body.add(waistLine);
 
+      // Jalur tenaga menegak di belakang badan
+      const spineTrack = mesh(new THREE.BoxGeometry(0.085, 0.56, 0.045), M.trimDark, 0, 1.32, 0.285);
+      const spineGlow  = mesh(new THREE.BoxGeometry(0.042, 0.50, 0.055), M.lineGreen, 0, 1.32, 0.292);
+      body.add(spineTrack, spineGlow);
+
+      // Jalur sisi bahu ke pinggang (kiri & kanan)
       [-1, 1].forEach(side => {
-        const shoulderPad = mesh(new THREE.SphereGeometry(0.15, 14, 12), M.vestSolid, side * 0.23, 1.60, 0);
-        shoulderPad.scale.set(1.05, 0.65, 1.25);
-        body.add(shoulderPad);
-        const frontPanel = mesh(new THREE.BoxGeometry(0.16, 0.58, 0.07), M.vestSolid, side * 0.17, 1.35, -0.22);
-        frontPanel.rotation.y = side * -0.25;
-        const chestPocket = mesh(new THREE.BoxGeometry(0.11, 0.12, 0.045), M.vestDark, side * 0.18, 1.47, -0.25);
-        chestPocket.rotation.y = side * -0.25;
-        const lowerPocket = mesh(new THREE.BoxGeometry(0.125, 0.16, 0.055), M.vestDark, side * 0.18, 1.18, -0.25);
-        lowerPocket.rotation.y = side * -0.25;
-        body.add(frontPanel, chestPocket, lowerPocket);
+        const sideStripe = mesh(new THREE.BoxGeometry(0.042, 0.54, 0.065), M.lineAccent, side * 0.355, 1.28, 0);
+        body.add(sideStripe);
       });
 
-      const shortsWaist = mesh(new THREE.CylinderGeometry(0.285, 0.30, 0.26, 20), M.shorts, 0, 0.92, 0);
-      shortsWaist.scale.set(1.06, 1, 0.85);
-      const waistBand = mesh(new THREE.TorusGeometry(0.275, 0.032, 8, 24), M.shortsDark, 0, 1.03, 0);
-      waistBand.rotation.x = Math.PI / 2; waistBand.scale.set(1.06, 0.85, 1);
-      body.add(shortsWaist, waistBand);
+      // --- KOLAR MERAH-OREN IKONIK DI LEHER ---
+      const collarRing = mesh(new THREE.TorusGeometry(0.245, 0.052, 12, 28), M.collar, 0, 1.71, 0);
+      collarRing.rotation.x = Math.PI / 2;
+      body.add(collarRing);
 
-      const neck = mesh(new THREE.CylinderGeometry(0.095, 0.11, 0.18, 14), M.skin, 0, 1.69, 0);
-      body.add(neck);
-
+      // --- KEPALA BULAT LICIN BERCAHAYA (GAYA NEON SCRAMBLE) ---
       const headGroup = new THREE.Group();
-      headGroup.position.set(0, 2.07, 0);
+      headGroup.position.set(0, 2.08, 0);
       body.add(headGroup);
 
-      const cranium = mesh(new THREE.SphereGeometry(0.43, 24, 18), M.skin, 0, 0, 0);
-      cranium.scale.set(0.96, 1.03, 0.95);
+      const cranium = mesh(new THREE.SphereGeometry(0.415, 28, 22), M.glowYellow, 0, 0, 0);
       headGroup.add(cranium);
 
-      const earGeo = new THREE.SphereGeometry(0.095, 10, 8);
-      const earL = mesh(earGeo, M.skin, -0.41, -0.02, 0.02);
-      const earR = mesh(earGeo, M.skin,  0.41, -0.02, 0.02);
-      earL.scale.set(0.55, 1.1, 0.85); earR.scale.set(0.55, 1.1, 0.85);
-      headGroup.add(earL, earR);
+      // Garisan halus ikat kepala / visor neon sian-hijau mengelilingi bahagian atas kepala
+      const headBand = mesh(new THREE.TorusGeometry(0.395, 0.022, 10, 32), M.lineAccent, 0, 0.14, 0);
+      headBand.rotation.x = Math.PI / 2 - 0.12;
+      headGroup.add(headBand);
 
-      [-0.155, 0.155].forEach((ex, idx) => {
-        const ew = mesh(new THREE.SphereGeometry(0.095, 12, 10), M.eyeWhite, ex, 0.02, -0.365);
-        ew.scale.set(1.0, 1.12, 0.5);
-        const ir = mesh(new THREE.SphereGeometry(0.056, 10, 8), M.iris, ex, 0.02, -0.402);
-        ir.scale.set(1, 1.05, 0.45);
-        const pu = mesh(new THREE.SphereGeometry(0.03, 8, 6), M.pupil, ex, 0.02, -0.422);
-        const brow = mesh(new THREE.BoxGeometry(0.145, 0.042, 0.045), M.hair, ex, 0.155, -0.385);
-        brow.rotation.z = idx === 0 ? 0.12 : -0.12;
-        headGroup.add(ew, ir, pu, brow);
-      });
-      const nose = mesh(new THREE.SphereGeometry(0.055, 10, 8), M.skin, 0, -0.055, -0.415);
-      const smile = mesh(new THREE.TorusGeometry(0.095, 0.016, 8, 16, Math.PI * 0.72), M.mouth, 0, -0.135, -0.385);
-      smile.rotation.z = Math.PI * 1.14;
-      headGroup.add(nose, smile);
-
-      const hairCap = mesh(new THREE.SphereGeometry(0.455, 22, 12, 0, Math.PI * 2, 0, Math.PI * 0.52), M.hair, 0, 0.03, 0.01);
-      hairCap.scale.set(0.98, 1.04, 0.99);
-      const hairBack = mesh(new THREE.SphereGeometry(0.452, 22, 14, -Math.PI * 0.65, Math.PI * 1.3, 0, Math.PI * 0.72), M.hair, 0, 0.01, 0.02);
-      headGroup.add(hairCap, hairBack);
-
-      const tuftGeo = new THREE.ConeGeometry(0.12, 0.34, 8);
-      [[ 0.00, 0.47, -0.08, 0.45, 0, 0.10, 1.15], [-0.18, 0.45, -0.06, 0.35, 0, 0.55, 1.05],
-       [ 0.19, 0.44, -0.06, 0.35, 0, -0.55, 1.05], [0.00, 0.42, 0.20, 1.05, 0, 0, 1.15],
-       [-0.22, 0.36, 0.18, 0.90, 0, 0.65, 1.00], [0.22, 0.36, 0.18, 0.90, 0, -0.65, 1.00],
-       [-0.18, 0.16, 0.36, 1.55, 0, 0.42, 0.95], [0.18, 0.16, 0.36, 1.55, 0, -0.42, 0.95],
-       [ 0.00, 0.02, 0.42, 1.85, 0, 0, 0.90]].forEach(([x, y, z, rx, ry, rz, s]) => {
-        const t = mesh(tuftGeo, M.hair, x, y, z);
-        t.rotation.set(rx, ry, rz);
-        t.scale.set(s, s, s * 0.85);
-        headGroup.add(t);
-      });
-
+      // --- TANGAN BULAT CHUNKY + GELANG GARISAN PERGELANGAN ---
       function makeArm(side) {
         const shoulder = new THREE.Group();
-        shoulder.position.set(side * 0.37, 1.54, 0);
-        shoulder.add(mesh(new THREE.CylinderGeometry(0.105, 0.095, 0.23, 12), M.sleeve, 0, -0.10, 0));
-        shoulder.add(mesh(capsule(0.068, 0.13), M.skin, 0, -0.25, 0));
+        shoulder.position.set(side * 0.43, 1.54, 0);
+        shoulder.add(mesh(capsule(0.132, 0.15), M.glowYellow, 0, -0.15, 0));
+
+        // Garisan sukan di lengan atas
+        const bicepRing = mesh(new THREE.TorusGeometry(0.134, 0.018, 8, 20), M.lineAccent, 0, -0.15, 0);
+        bicepRing.rotation.x = Math.PI / 2;
+        shoulder.add(bicepRing);
+
         const elbow = new THREE.Group();
-        elbow.position.y = -0.34;
-        elbow.add(mesh(capsule(0.062, 0.18), M.skin, 0, -0.14, 0));
-        if (side === -1) {
-          elbow.add(mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 12), M.watchBand, 0, -0.23, 0));
-          elbow.add(mesh(new THREE.BoxGeometry(0.045, 0.055, 0.072), M.watchFace, -0.058, -0.23, 0));
-        }
-        const hand = mesh(new THREE.SphereGeometry(0.082, 12, 10), M.skin, 0, -0.31, 0);
-        hand.scale.set(0.88, 1.08, 0.82);
-        elbow.add(hand);
+        elbow.position.y = -0.30;
+        elbow.add(mesh(capsule(0.122, 0.17), M.glowYellow, 0, -0.15, 0));
+
+        const wristRing = mesh(new THREE.TorusGeometry(0.125, 0.02, 8, 20), M.lineGreen, 0, -0.22, 0);
+        wristRing.rotation.x = Math.PI / 2;
+        elbow.add(wristRing);
+
         shoulder.add(elbow);
         body.add(shoulder);
         return { shoulder, elbow };
       }
 
+      // --- KAKI BULAT CHUNKY + GARISAN BUKU LALI (TAPAK TEPAT Y = 0) ---
       function makeLeg(side) {
         const hip = new THREE.Group();
-        hip.position.set(side * 0.165, 0.88, 0);
-        hip.add(mesh(new THREE.CylinderGeometry(0.152, 0.14, 0.34, 14), M.shorts, 0, -0.17, 0));
-        hip.add(mesh(new THREE.BoxGeometry(0.058, 0.155, 0.145), M.shortsDark, side * 0.14, -0.18, 0.01));
-        hip.add(mesh(new THREE.SphereGeometry(0.088, 10, 8), M.skin, 0, -0.35, 0));
+        hip.position.set(side * 0.185, 0.84, 0);
+        hip.add(mesh(capsule(0.152, 0.18), M.glowYellow, 0, -0.19, 0));
+
         const knee = new THREE.Group();
         knee.position.y = -0.38;
-        knee.add(mesh(new THREE.CylinderGeometry(0.086, 0.08, 0.19, 10), M.skin, 0, -0.095, 0));
-        knee.add(mesh(new THREE.CylinderGeometry(0.09, 0.086, 0.19, 12), M.sock, 0, -0.275, 0));
-        knee.add(mesh(new THREE.CylinderGeometry(0.093, 0.093, 0.026, 12), M.sockStripe, 0, -0.205, 0));
-        const sole = mesh(new THREE.BoxGeometry(0.215, 0.076, 0.42), M.shoeWhite, 0, -0.462, -0.055);
-        const upper = mesh(new THREE.SphereGeometry(0.125, 14, 10), M.shoeBlue, 0, -0.385, -0.06);
-        upper.scale.set(0.88, 0.72, 1.56);
-        const heelOrange = mesh(new THREE.BoxGeometry(0.205, 0.115, 0.12), M.shoeOrange, 0, -0.39, 0.095);
-        const tongueOrange = mesh(new THREE.BoxGeometry(0.11, 0.07, 0.12), M.shoeOrange, 0, -0.33, -0.06);
-        knee.add(sole, upper, heelOrange, tongueOrange);
+        // Tinggi kapsul = 0.17 + 2*0.145 = 0.46 -> pusat di -0.23 menjadikan tapak tepat y = 0.00
+        knee.add(mesh(capsule(0.145, 0.17), M.glowYellow, 0, -0.23, 0));
+
+        const ankleRing = mesh(new THREE.TorusGeometry(0.148, 0.022, 8, 20), M.lineAccent, 0, -0.31, 0);
+        ankleRing.rotation.x = Math.PI / 2;
+        knee.add(ankleRing);
+
         hip.add(knee);
         body.add(hip);
         return { hip, knee };
@@ -2373,7 +2373,7 @@
       const legL = makeLeg(-1), legR = makeLeg(1);
 
       scene.add(root);
-      return { root, body, headGroup, armL, armR, legL, legR, glbModel: null, glbMixer: null };
+      return { root, body, headGroup, armL, armR, legL, legR, mats: M, glbModel: null, glbMixer: null };
     }
 
     const runner = buildRunner();
@@ -2402,16 +2402,16 @@
     }
 
     // Jejak tenaga neon & percikan gaya Neon Scramble di belakang pelari
-    const trailMat = new THREE.MeshBasicMaterial({ color: 0xfb923c, transparent: true, opacity: 0.72, side: THREE.DoubleSide });
-    const trailMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 6.2), trailMat);
+    const trailMat = new THREE.MeshBasicMaterial({ color: 0xfb923c, transparent: true, opacity: 0.78, side: THREE.DoubleSide });
+    const trailMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 6.8), trailMat);
     trailMesh.rotation.x = -Math.PI / 2;
-    trailMesh.position.set(0, 0.12, 3.3);
+    trailMesh.position.set(0, 0.12, 3.5);
     scene.add(trailMesh);
 
     const sparks = [];
-    const sparkGeo = new THREE.BoxGeometry(0.08, 0.08, 0.55);
+    const sparkGeo = new THREE.BoxGeometry(0.08, 0.08, 0.58);
     const sparkMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 18; i++) {
       const sp = new THREE.Mesh(sparkGeo, sparkMat);
       sp.visible = false;
       scene.add(sp);
@@ -2422,16 +2422,16 @@
     function emitSpark() {
       const s = sparks[sparkIdx++ % sparks.length];
       s.m.position.set(player.x + (Math.random() - 0.5) * 0.55, Math.max(0.15, player.y + 0.25), 0.35);
-      s.vx = (Math.random() - 0.5) * 2.2;
+      s.vx = (Math.random() - 0.5) * 2.4;
       s.vy = 0.6 + Math.random() * 1.4;
       s.vz = 9 + Math.random() * 6;
-      s.life = 0.32;
+      s.life = 0.34;
       s.m.visible = true;
     }
 
     const shadowBlob = new THREE.Mesh(
-      new THREE.CircleGeometry(0.65, 24),
-      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.36, depthWrite: false })
+      new THREE.CircleGeometry(0.72, 24),
+      new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.42, depthWrite: false })
     );
     shadowBlob.rotation.x = -Math.PI / 2;
     shadowBlob.position.y = 0.08;
@@ -2474,22 +2474,29 @@
 
       const grounded = player.y <= 0.001 && skyDropTime <= 0;
       runAmt += ((isRunning && skyDropTime <= 0 ? Math.min(1, speed / 10) : 0) - runAmt) * Math.min(1, dt * 7);
-      player.phase += dt * speed * 0.62;
+      player.phase += dt * speed * 0.65;
 
       const R = runner;
       R.root.position.set(player.x, player.y, 0);
-      R.root.rotation.z = (isRunning && skyDropTime <= 0) ? (player.x - targetX) * 0.13 : 0;
+      R.root.rotation.z = (isRunning && skyDropTime <= 0) ? (player.x - targetX) * 0.14 : 0;
       R.root.visible = player.inv > 0 ? Math.floor(t * 14) % 2 === 0 : true;
 
-      runnerLight.position.set(player.x, player.y + 3.2, 2.2);
+      runnerLight.position.set(player.x, player.y + 3.0, 2.0);
+      runnerLight.color.setHex(player.boostTimer > 0 ? 0x34d399 : 0xffb454);
+
+      // Warna garisan neon pada badan bertukar lebih terang semasa BOOST SIHAT
+      if (R.mats) {
+        R.mats.lineAccent.color.setHex(player.boostTimer > 0 ? 0x34d399 : 0x38bdf8);
+        R.mats.glowYellow.emissiveIntensity = player.boostTimer > 0 ? 0.68 : 0.48;
+      }
 
       // Kemas kini jejak neon & percikan
       trailMesh.visible = isRunning;
-      trailMesh.position.set(player.x, Math.max(0.12, player.y + 0.12), 3.3);
+      trailMesh.position.set(player.x, Math.max(0.12, player.y + 0.12), 3.5);
       trailMat.color.setHex(player.boostTimer > 0 ? 0x34d399 : 0xfb923c);
-      trailMat.opacity = isRunning ? (0.55 + Math.sin(t * 18) * 0.18) : 0;
+      trailMat.opacity = isRunning ? (0.58 + Math.sin(t * 18) * 0.18) : 0;
 
-      if (isRunning && Math.random() < 0.65) emitSpark();
+      if (isRunning && Math.random() < 0.72) emitSpark();
       sparks.forEach(s => {
         if (s.life > 0) {
           s.life -= dt;
@@ -2510,51 +2517,54 @@
         const b = R.body;
 
         if (skyDropTime > 0) {
-          // Pose Sky Drop (tangan & kaki terbuka terjun udara)
+          // Pose Sky Drop (gaya bintang terbuka macam Neon Scramble!)
           b.scale.y += (1 - b.scale.y) * k;
           ease(b, 'x', 0.35); ease(b, 'y', 0);
-          ease(R.armL.shoulder, 'z', -1.25); ease(R.armR.shoulder, 'z', 1.25);
-          ease(R.armL.shoulder, 'x', -0.2); ease(R.armR.shoulder, 'x', -0.2);
-          ease(R.legL.hip, 'x', -0.25); ease(R.legR.hip, 'x', 0.25);
-          ease(R.legL.knee, 'x', -0.5); ease(R.legR.knee, 'x', -0.5);
+          ease(R.armL.shoulder, 'z', -1.45); ease(R.armR.shoulder, 'z', 1.45);
+          ease(R.armL.shoulder, 'x', -0.15); ease(R.armR.shoulder, 'x', -0.15);
+          ease(R.armL.elbow, 'x', 0.15); ease(R.armR.elbow, 'x', 0.15);
+          ease(R.legL.hip, 'x', -0.2); ease(R.legR.hip, 'x', 0.2);
+          ease(R.legL.knee, 'x', -0.35); ease(R.legR.knee, 'x', -0.35);
           b.position.y = 0;
         } else if (player.roll > 0) {
-          b.scale.y += (0.6 - b.scale.y) * Math.min(1, dt * 20);
-          ease(b, 'x', -0.45); ease(b, 'y', 0);
+          b.scale.y += (0.58 - b.scale.y) * Math.min(1, dt * 20);
+          ease(b, 'x', -0.5); ease(b, 'y', 0);
           ease(R.headGroup, 'x', 0.2);
           ease(R.legL.hip, 'x', 1.3); ease(R.legR.hip, 'x', 1.3);
-          ease(R.legL.knee, 'x', -1.6); ease(R.legR.knee, 'x', -1.6);
+          ease(R.legL.knee, 'x', -1.55); ease(R.legR.knee, 'x', -1.55);
           ease(R.armL.shoulder, 'x', 0.9); ease(R.armR.shoulder, 'x', 0.9);
-          ease(R.armL.elbow, 'x', 1.2); ease(R.armR.elbow, 'x', 1.2);
-          ease(R.armL.shoulder, 'z', -0.14); ease(R.armR.shoulder, 'z', 0.14);
+          ease(R.armL.elbow, 'x', 1.1); ease(R.armR.elbow, 'x', 1.1);
+          ease(R.armL.shoulder, 'z', -0.35); ease(R.armR.shoulder, 'z', 0.35);
           b.position.y = 0;
         } else if (!grounded) {
+          // Pose lompat ceria dengan tangan terbuka bergaya
           b.scale.y += (1 - b.scale.y) * Math.min(1, dt * 14);
-          ease(b, 'x', -0.12); ease(b, 'y', 0);
+          ease(b, 'x', -0.14); ease(b, 'y', 0);
           ease(R.headGroup, 'x', -0.08);
-          ease(R.legL.hip, 'x', 0.75); ease(R.legR.hip, 'x', -0.35);
-          ease(R.legL.knee, 'x', -1.25); ease(R.legR.knee, 'x', -0.75);
-          ease(R.armR.shoulder, 'x', 2.4); ease(R.armR.elbow, 'x', 0.35);
-          ease(R.armL.shoulder, 'x', -0.6); ease(R.armL.elbow, 'x', 0.55);
-          ease(R.armL.shoulder, 'z', -0.14); ease(R.armR.shoulder, 'z', 0.14);
+          ease(R.legL.hip, 'x', 0.8); ease(R.legR.hip, 'x', -0.45);
+          ease(R.legL.knee, 'x', -1.15); ease(R.legR.knee, 'x', -0.65);
+          ease(R.armR.shoulder, 'x', 1.9); ease(R.armR.elbow, 'x', 0.4);
+          ease(R.armL.shoulder, 'x', -0.55); ease(R.armL.elbow, 'x', 0.5);
+          ease(R.armL.shoulder, 'z', -0.65); ease(R.armR.shoulder, 'z', 0.65);
           b.position.y = 0;
         } else {
+          // Larian cergas gaya patung kuning Neon Scramble
           b.scale.y += (1 - b.scale.y) * Math.min(1, dt * 14);
           const s = Math.sin(player.phase), c = Math.cos(player.phase);
-          ease(b, 'x', -0.18 * runAmt);
-          ease(b, 'y', s * 0.08 * runAmt);
+          ease(b, 'x', -0.20 * runAmt);
+          ease(b, 'y', s * 0.11 * runAmt);
           ease(R.headGroup, 'x', 0.08 * runAmt);
-          ease(R.headGroup, 'y', -s * 0.05 * runAmt);
-          ease(R.legL.hip, 'x', s * 0.88 * runAmt);
-          ease(R.legR.hip, 'x', -s * 0.88 * runAmt);
-          ease(R.legL.knee, 'x', -Math.max(0, c) * 1.32 * runAmt - 0.05);
-          ease(R.legR.knee, 'x', -Math.max(0, -c) * 1.32 * runAmt - 0.05);
-          ease(R.armL.shoulder, 'x', -s * 0.85 * runAmt);
-          ease(R.armR.shoulder, 'x', s * 0.85 * runAmt);
-          ease(R.armL.elbow, 'x', 0.25 + 1.05 * runAmt);
-          ease(R.armR.elbow, 'x', 0.25 + 1.05 * runAmt);
-          ease(R.armL.shoulder, 'z', -0.14); ease(R.armR.shoulder, 'z', 0.14);
-          b.position.y = Math.abs(c) * 0.1 * runAmt;
+          ease(R.headGroup, 'y', -s * 0.06 * runAmt);
+          ease(R.legL.hip, 'x', s * 0.95 * runAmt);
+          ease(R.legR.hip, 'x', -s * 0.95 * runAmt);
+          ease(R.legL.knee, 'x', -Math.max(0, c) * 1.25 * runAmt - 0.06);
+          ease(R.legR.knee, 'x', -Math.max(0, -c) * 1.25 * runAmt - 0.06);
+          ease(R.armL.shoulder, 'x', -s * 0.92 * runAmt);
+          ease(R.armR.shoulder, 'x', s * 0.92 * runAmt);
+          ease(R.armL.elbow, 'x', 0.25 + 0.85 * runAmt);
+          ease(R.armR.elbow, 'x', 0.25 + 0.85 * runAmt);
+          ease(R.armL.shoulder, 'z', -0.38); ease(R.armR.shoulder, 'z', 0.38);
+          b.position.y = Math.abs(c) * 0.12 * runAmt;
         }
       }
 
